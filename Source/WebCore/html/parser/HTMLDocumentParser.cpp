@@ -39,6 +39,7 @@
 #include <fstream>
 
 static std::ofstream FileOut("/home/haha/code/insert.log");
+static int InsertCount = 0;
 
 namespace WebCore {
 
@@ -365,7 +366,7 @@ void HTMLDocumentParser::insert(const SegmentedString& source)
     String string = source.toString();
     // Allocate a buffer big enough to hold all the characters.
     const int length = string.length();
-    Vector<char> buffer(length * 3);
+    Vector<char> buffer(length * 3 + 1);
 
     // Convert to runs of 8-bit characters.
     char* p = buffer.data();
@@ -379,9 +380,12 @@ void HTMLDocumentParser::insert(const SegmentedString& source)
         }
     }
 
+    *p++ = '\0';
     buffer.shrink(p - buffer.data());
 
-    FileOut << buffer.data() << std::endl;
+    char* s = buffer.data();
+    FileOut << "line " << InsertCount++ << ":" << std::endl;
+    FileOut << s << std::endl;
 
 }
 
