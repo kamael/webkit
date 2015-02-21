@@ -35,6 +35,11 @@
 #include "HTMLDocument.h"
 #include "InspectorInstrumentation.h"
 
+#include <wtf/unicode/UTF8.h>
+#include <fstream>
+
+static std::ofstream FileOut("/home/haha/code/insert.log");
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -354,6 +359,30 @@ void HTMLDocumentParser::insert(const SegmentedString& source)
     }
 
     endIfDelayed();
+
+
+
+    String string = source.toString();
+    // Allocate a buffer big enough to hold all the characters.
+    const int length = string.length();
+    Vector<char> buffer(length * 3);
+
+    // Convert to runs of 8-bit characters.
+    char* p = buffer.data();
+    if (length) {
+        if (string.is8Bit()) {
+            const LChar* d = string.characters8();
+            WTF::Unicode::convertLatin1ToUTF8(&d, d + length, &p, p + buffer.size());
+        } else {
+            const UChar* d = string.characters16();
+            WTF::Unicode::convertUTF16ToUTF8(&d, d + length, &p, p + buffer.size(), true);
+        }
+    }
+
+    buffer.shrink(p - buffer.data());
+
+    FileOut << buffer.data() << std::endl;
+
 }
 
 void HTMLDocumentParser::append(PassRefPtr<StringImpl> inputSource)
@@ -563,7 +592,7 @@ void HTMLDocumentParser::parseDocumentFragment(const String& source, DocumentFra
     ASSERT(!parser->processingData());
     parser->detach();
 }
-    
+
 void HTMLDocumentParser::suspendScheduledTasks()
 {
     if (m_parserScheduler)
