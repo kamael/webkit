@@ -2227,6 +2227,20 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Production|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Production|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAttachmentElement.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_WinCairo|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_WinCairo|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugSuffix|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugSuffix|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_WinCairo|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_WinCairo|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Production|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Production|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAudioElement.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -6805,6 +6819,7 @@
     <ClCompile Include="..\Modules\gamepad\GamepadEvent.cpp" />
     <ClCompile Include="..\Modules\gamepad\NavigatorGamepad.cpp" />
     <ClCompile Include="..\Modules\geolocation\Coordinates.cpp" />
+    <ClCompile Include="..\Modules\geolocation\GeoNotifier.cpp" />
     <ClCompile Include="..\Modules\geolocation\Geolocation.cpp" />
     <ClCompile Include="..\Modules\geolocation\GeolocationController.cpp" />
     <ClCompile Include="..\Modules\geolocation\NavigatorGeolocation.cpp" />
@@ -8222,6 +8237,7 @@
     <ClCompile Include="..\platform\win\WidgetWin.cpp" />
     <ClCompile Include="..\platform\win\WindowMessageBroadcaster.cpp" />
     <ClCompile Include="..\platform\cf\CFURLExtras.cpp" />
+    <ClCompile Include="..\platform\cf\CoreMediaSoftLink.cpp" />
     <ClCompile Include="..\platform\cf\FileSystemCF.cpp" />
     <ClCompile Include="..\platform\cf\URLCF.cpp" />
     <ClCompile Include="..\platform\cf\SharedBufferCF.cpp" />
@@ -8239,9 +8255,9 @@
     <ClCompile Include="..\platform\graphics\Font.cpp" />
     <ClCompile Include="..\platform\graphics\FontCache.cpp" />
     <ClCompile Include="..\platform\graphics\FontCascade.cpp" />
+    <ClCompile Include="..\platform\graphics\FontCascadeFonts.cpp" />
     <ClCompile Include="..\platform\graphics\FontDescription.cpp" />
     <ClCompile Include="..\platform\graphics\FontGenericFamilies.cpp" />
-    <ClCompile Include="..\platform\graphics\FontGlyphs.cpp" />
     <ClCompile Include="..\platform\graphics\FontFeatureSettings.cpp" />
     <ClCompile Include="..\platform\graphics\FontPlatformData.cpp" />
     <ClCompile Include="..\platform\graphics\FontRanges.cpp" />
@@ -18614,6 +18630,7 @@
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAnchorElement.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAppletElement.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAreaElement.h" />
+    <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAttachmentElement.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAudioElement.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLBaseElement.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLBaseFontElement.h" />
@@ -19136,6 +19153,7 @@
     <ClInclude Include="..\ForwardingHeaders\runtime\PrototypeFunction.h" />
     <ClInclude Include="..\ForwardingHeaders\runtime\RegExp.h" />
     <ClInclude Include="..\ForwardingHeaders\runtime\RegExpObject.h" />
+    <ClInclude Include="..\ForwardingHeaders\runtime\RuntimeFlags.h" />
     <ClInclude Include="..\ForwardingHeaders\runtime\StorageBarrier.h" />
     <ClInclude Include="..\ForwardingHeaders\runtime\StringPrototype.h" />
     <ClInclude Include="..\ForwardingHeaders\runtime\Structure.h" />
@@ -19761,6 +19779,7 @@
     <ClInclude Include="..\platform\win\WindowMessageListener.h" />
     <ClInclude Include="..\platform\win\WindowsTouch.h" />
     <ClInclude Include="..\platform\cf\CFURLExtras.h" />
+    <ClInclude Include="..\platform\cf\CoreMediaSoftLink.h" />
     <ClInclude Include="..\platform\cf\win\CertificateCFWin.h" />
     <ClInclude Include="..\platform\graphics\BitmapImage.h" />
     <ClInclude Include="..\platform\graphics\Color.h" />
@@ -19776,9 +19795,9 @@
     <ClInclude Include="..\platform\graphics\Font.h" />
     <ClInclude Include="..\platform\graphics\FontCache.h" />
     <ClInclude Include="..\platform\graphics\FontCascade.h" />
+    <ClInclude Include="..\platform\graphics\FontCascadeFonts.h" />
     <ClInclude Include="..\platform\graphics\FontDescription.h" />
     <ClInclude Include="..\platform\graphics\FontGenericFamilies.h" />
-    <ClInclude Include="..\platform\graphics\FontGlyphs.h" />
     <ClInclude Include="..\platform\graphics\FontFeatureSettings.h" />
     <ClInclude Include="..\platform\graphics\FontMetrics.h" />
     <ClInclude Include="..\platform\graphics\FontPlatformData.h" />
@@ -20000,7 +20019,6 @@
     <ClInclude Include="..\platform\graphics\avfoundation\MediaPlayerPrivateAVFoundation.h" />
     <ClInclude Include="..\platform\graphics\avfoundation\MediaTimeAVFoundation.h" />
     <ClInclude Include="..\platform\graphics\avfoundation\cf\AVFoundationCFSoftLinking.h" />
-    <ClInclude Include="..\platform\graphics\avfoundation\cf\CoreMediaSoftLinking.h" />
     <ClInclude Include="..\platform\graphics\avfoundation\cf\MediaPlayerPrivateAVFoundationCF.h" />
     <ClInclude Include="..\platform\network\AuthenticationChallengeBase.h" />
     <ClInclude Include="..\platform\network\AuthenticationClient.h" />

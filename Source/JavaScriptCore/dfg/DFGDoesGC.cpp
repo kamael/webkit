@@ -117,6 +117,10 @@ bool doesGC(Graph& graph, Node* node)
     case CompareStrictEq:
     case Call:
     case Construct:
+    case CallVarargs:
+    case ConstructVarargs:
+    case LoadVarargs:
+    case CallForwardVarargs:
     case NativeCall:
     case NativeConstruct:
     case Breakpoint:
@@ -131,6 +135,7 @@ bool doesGC(Graph& graph, Node* node)
     case IsNumber:
     case IsString:
     case IsObject:
+    case IsObjectOrNull:
     case IsFunction:
     case TypeOf:
     case LogicalNot:

@@ -384,6 +384,9 @@
     <ClCompile Include="..\Modules\geolocation\Geolocation.cpp">
       <Filter>Modules\geolocation</Filter>
     </ClCompile>
+    <ClCompile Include="..\Modules\geolocation\GeoNotifier.cpp">
+      <Filter>Modules\geolocation</Filter>
+    </ClCompile>
     <ClCompile Include="..\Modules\geolocation\GeolocationController.cpp">
       <Filter>Modules\geolocation</Filter>
     </ClCompile>
@@ -5320,6 +5323,9 @@
     <ClCompile Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAreaElement.cpp">
       <Filter>DerivedSources</Filter>
     </ClCompile>
+    <ClCompile Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAttachmentElement.cpp">
+      <Filter>DerivedSources</Filter>
+    </ClCompile>
     <ClCompile Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAudioElement.cpp">
       <Filter>DerivedSources</Filter>
     </ClCompile>
@@ -8691,9 +8697,6 @@
     <ClInclude Include="..\platform\graphics\avfoundation\cf\AVFoundationCFSoftLinking.h">
       <Filter>platform\graphics\avfoundation\cf</Filter>
     </ClInclude>
-    <ClInclude Include="..\platform\graphics\avfoundation\cf\CoreMediaSoftLinking.h">
-      <Filter>platform\graphics\avfoundation\cf</Filter>
-    </ClInclude>
     <ClInclude Include="..\platform\graphics\avfoundation\cf\MediaPlayerPrivateAVFoundationCF.h">
       <Filter>platform\graphics\avfoundation\cf</Filter>
     </ClInclude>
@@ -8825,6 +8828,9 @@
     </ClInclude>
     <ClInclude Include="..\platform\spi\cg\CoreGraphicsSPI.h">
       <Filter>platform\spi\cg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\platform\spi\cf\CoreMediaSPI.h">
+      <Filter>platform\spi\cf</Filter>
     </ClInclude>
     <ClInclude Include="..\platform\sql\SQLiteDatabase.h">
       <Filter>platform\sql</Filter>
@@ -11628,6 +11634,9 @@
     <ClInclude Include="..\ForwardingHeaders\runtime\Protect.h">
       <Filter>ForwardingHeaders\runtime</Filter>
     </ClInclude>
+    <ClInclude Include="..\ForwardingHeaders\runtime\RuntimeFlags.h">
+      <Filter>ForwardingHeaders\runtime</Filter>
+    </ClInclude>
     <ClInclude Include="..\ForwardingHeaders\runtime\StringObject.h">
       <Filter>ForwardingHeaders\runtime</Filter>
     </ClInclude>
@@ -12169,6 +12178,9 @@
     <ClInclude Include="..\platform\cf\CFURLExtras.h">
       <Filter>platform\cf</Filter>
     </ClInclude>
+    <ClInclude Include="..\platform\cf\CoreMediaSoftLink.h">
+      <Filter>platform\cf</Filter>
+    </ClInclude>
     <ClInclude Include="..\platform\cf\win\CertificateCFWin.h">
       <Filter>platform\cf\win</Filter>
     </ClInclude>
@@ -12666,6 +12678,9 @@
       <Filter>DerivedSources</Filter>
     </ClInclude>
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAreaElement.h">
+      <Filter>DerivedSources</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAttachmentElement.h">
       <Filter>DerivedSources</Filter>
     </ClInclude>
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\JSHTMLAudioElement.h">

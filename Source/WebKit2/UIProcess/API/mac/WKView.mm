@@ -95,6 +95,7 @@
 #import <WebCore/PlatformEventFactoryMac.h>
 #import <WebCore/PlatformScreen.h>
 #import <WebCore/Region.h>
+#import <WebCore/RuntimeApplicationChecks.h>
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/SoftLinking.h>
 #import <WebCore/TextAlternativeWithRange.h>
@@ -337,8 +338,6 @@ struct WKViewInterpretKeyEventsParameters {
 
     NSNotificationCenter* workspaceNotificationCenter = [[NSWorkspace sharedWorkspace] notificationCenter];
     [workspaceNotificationCenter removeObserver:self name:NSWorkspaceActiveSpaceDidChangeNotification object:nil];
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillTerminateNotification object:NSApp];
 
     if (canLoadLUNotificationPopoverWillClose())
         [[NSNotificationCenter defaultCenter] removeObserver:self name:getLUNotificationPopoverWillClose() object:nil];
@@ -738,6 +737,26 @@ WEBCORE_COMMAND(yankAndSelect)
     return _data->_page->readSelectionFromPasteboard([pasteboard name]);
 }
 
+// Font panel support.
+
+- (void)_selectionChanged
+{
+    const EditorState& editorState = _data->_page->editorState();
+    if (editorState.selectionIsNone || !editorState.isContentEditable)
+        return;
+    NSFont *font = [NSFont fontWithName:editorState.fontName size:editorState.fontSize];
+    [[NSFontManager sharedFontManager] setSelectedFont:font isMultiple:editorState.selectionHasMultipleFonts];
+}
+
+- (void)changeFont:(id)sender
+{
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSFont *font = [fontManager convertFont:[fontManager selectedFont]];
+    if (!font)
+        return;
+    _data->_page->setFont([font familyName], [font pointSize], [[font fontDescriptor] symbolicTraits]);
+}
+
 /*
 
 When possible, editing-related methods should be implemented in WebCore with the
@@ -746,7 +765,6 @@ individual methods here with Mac-specific code.
 
 Editing-related methods still unimplemented that are implemented in WebKit1:
 
-- (void)changeFont:(id)sender;
 - (void)complete:(id)sender;
 - (void)copyFont:(id)sender;
 - (void)makeBaseWritingDirectionLeftToRight:(id)sender;
@@ -2715,11 +2733,6 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     _data->_page->viewStateDidChange(ViewState::IsVisible);
 }
 
-- (void)_applicationWillTerminate:(NSNotification *)notification
-{
-    _data->_page->process().processPool().applicationWillTerminate();
-}
-
 - (void)_dictionaryLookupPopoverWillClose:(NSNotification *)notification
 {
     [self _setTextIndicator:nil fadeOut:NO];
@@ -3620,8 +3633,6 @@ static NSString *pathWithUniqueFilenameForPath(NSString *path)
     NSNotificationCenter* workspaceNotificationCenter = [[NSWorkspace sharedWorkspace] notificationCenter];
     [workspaceNotificationCenter addObserver:self selector:@selector(_activeSpaceDidChange:) name:NSWorkspaceActiveSpaceDidChangeNotification object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationWillTerminate:) name:NSApplicationWillTerminateNotification object:NSApp];
-
     if (canLoadLUNotificationPopoverWillClose())
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_dictionaryLookupPopoverWillClose:) name:getLUNotificationPopoverWillClose() object:nil];
 
@@ -3634,7 +3645,9 @@ static NSString *pathWithUniqueFilenameForPath(NSString *path)
         self._actionMenu.autoenablesItems = NO;
     }
 
-    if (Class gestureClass = NSClassFromString(@"NSImmediateActionGestureRecognizer")) {
+    // FIXME: We should not permanently disable this for iBooks. rdar://problem/19585689
+    Class gestureClass = NSClassFromString(@"NSImmediateActionGestureRecognizer");
+    if (gestureClass && !applicationIsIBooks()) {
         _data->_immediateActionGestureRecognizer = adoptNS([(NSImmediateActionGestureRecognizer *)[gestureClass alloc] initWithTarget:nil action:NULL]);
         _data->_immediateActionController = adoptNS([[WKImmediateActionController alloc] initWithPage:*_data->_page view:self recognizer:_data->_immediateActionGestureRecognizer.get()]);
         [_data->_immediateActionGestureRecognizer setDelegate:_data->_immediateActionController.get()];

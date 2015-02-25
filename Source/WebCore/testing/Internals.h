@@ -47,6 +47,7 @@ class DOMStringList;
 class DOMWindow;
 class Document;
 class Element;
+class File;
 class Frame;
 class InspectorFrontendChannelDummy;
 class InspectorFrontendClientDummy;
@@ -88,6 +89,9 @@ public:
     void clearMemoryCache();
     void pruneMemoryCacheToSize(unsigned size);
     unsigned memoryCacheSize() const;
+
+    void clearPageCache();
+    unsigned pageCacheSize() const;
 
     PassRefPtr<CSSComputedStyleDeclaration> computedStyleIncludingVisitedInfo(Node*, ExceptionCode&) const;
 
@@ -360,6 +364,8 @@ public:
 
     void setPageMuted(bool);
     bool isPagePlayingAudio();
+
+    RefPtr<File> createFile(const String&);
 
 private:
     explicit Internals(Document*);

@@ -65,15 +65,11 @@ MediaPlayerPrivateMediaFoundation::~MediaPlayerPrivateMediaFoundation()
     endSession();
 }
 
-PassOwnPtr<MediaPlayerPrivateInterface> MediaPlayerPrivateMediaFoundation::create(MediaPlayer* player)
-{
-    return adoptPtr(new MediaPlayerPrivateMediaFoundation(player));
-}
-
 void MediaPlayerPrivateMediaFoundation::registerMediaEngine(MediaEngineRegistrar registrar)
 {
     if (isAvailable())
-        registrar(create, getSupportedTypes, supportsType, 0, 0, 0, 0);
+        registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateMediaFoundation>(player); },
+            getSupportedTypes, supportsType, 0, 0, 0, 0);
 }
 
 bool MediaPlayerPrivateMediaFoundation::isAvailable() 
@@ -178,7 +174,7 @@ MediaPlayer::ReadyState MediaPlayerPrivateMediaFoundation::readyState() const
 std::unique_ptr<PlatformTimeRanges> MediaPlayerPrivateMediaFoundation::buffered() const
 { 
     notImplemented();
-    return PlatformTimeRanges::create();
+    return std::make_unique<PlatformTimeRanges>();
 }
 
 bool MediaPlayerPrivateMediaFoundation::didLoadingProgress() const
@@ -245,7 +241,6 @@ bool MediaPlayerPrivateMediaFoundation::endSession()
 {
     if (m_mediaSession) {
         m_mediaSession->Shutdown();
-        m_mediaSession->Release();
         m_mediaSession = nullptr;
     }
 

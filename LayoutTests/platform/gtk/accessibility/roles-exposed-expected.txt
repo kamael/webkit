@@ -137,7 +137,7 @@ input[type='button']
       AXRole: AXButton
       
 input[type='color']
-      AXRole: AXTextField
+      AXRole: AXButton
       
 input[type='checkbox']
       AXRole: AXCheckBox
@@ -642,6 +642,9 @@ div[role=spinbutton]
       
 div[role=status]
       AXRole: AXStatusBar
+      
+div[role=switch]
+      AXRole: AXToggleButton
       
 div[role=tablist]
       AXRole: AXTabGroup

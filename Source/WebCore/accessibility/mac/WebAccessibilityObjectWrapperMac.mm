@@ -882,19 +882,19 @@ static void AXAttributeStringSetStyle(NSMutableAttributedString* attrString, Ren
     }
     
     if ((decor & (TextDecorationUnderline | TextDecorationLineThrough)) != 0) {
-        // find colors using quirk mode approach (strict mode would use current
-        // color for all but the root line box, which would use getTextDecorationColors)
-        Color underline, overline, linethrough;
-        renderer->getTextDecorationColors(decor, underline, overline, linethrough);
+        // FIXME: Should the underline style be reported here?
+        Color underlineColor, overlineColor, linethroughColor;
+        TextDecorationStyle underlineStyle, overlineStyle, linethroughStyle;
+        renderer->getTextDecorationColorsAndStyles(decor, underlineColor, overlineColor, linethroughColor, underlineStyle, overlineStyle, linethroughStyle);
         
         if ((decor & TextDecorationUnderline) != 0) {
             AXAttributeStringSetNumber(attrString, NSAccessibilityUnderlineTextAttribute, [NSNumber numberWithBool:YES], range);
-            AXAttributeStringSetColor(attrString, NSAccessibilityUnderlineColorTextAttribute, nsColor(underline), range);
+            AXAttributeStringSetColor(attrString, NSAccessibilityUnderlineColorTextAttribute, nsColor(underlineColor), range);
         }
         
         if ((decor & TextDecorationLineThrough) != 0) {
             AXAttributeStringSetNumber(attrString, NSAccessibilityStrikethroughTextAttribute, [NSNumber numberWithBool:YES], range);
-            AXAttributeStringSetColor(attrString, NSAccessibilityStrikethroughColorTextAttribute, nsColor(linethrough), range);
+            AXAttributeStringSetColor(attrString, NSAccessibilityStrikethroughColorTextAttribute, nsColor(linethroughColor), range);
         }
     }
     
@@ -1942,7 +1942,8 @@ static const AccessibilityRoleMap& createAccessibilityRoleMap()
         { AudioRole, NSAccessibilityGroupRole },
         { VideoRole, NSAccessibilityGroupRole },
         { HorizontalRuleRole, NSAccessibilitySplitterRole },
-        { BlockquoteRole, NSAccessibilityGroupRole }
+        { BlockquoteRole, NSAccessibilityGroupRole },
+        { SwitchRole, NSAccessibilityCheckBoxRole },
     };
     AccessibilityRoleMap& roleMap = *new AccessibilityRoleMap;
     
@@ -2117,6 +2118,9 @@ static NSString* roleValueToNSString(AccessibilityRole value)
     
     if (m_object->isMediaTimeline())
         return NSAccessibilityTimelineSubrole;
+
+    if (m_object->isSwitch())
+        return NSAccessibilitySwitchSubrole;
     
     return nil;
 }
@@ -2434,7 +2438,7 @@ static NSString* roleValueToNSString(AccessibilityRole value)
         if (m_object->isHeading())
             return [NSNumber numberWithInt:m_object->headingLevel()];
         
-        if (m_object->isCheckboxOrRadio() || m_object->isMenuItem()) {
+        if (m_object->isCheckboxOrRadio() || m_object->isMenuItem() || m_object->isSwitch()) {
             switch (m_object->checkboxOrRadioValue()) {
                 case ButtonStateOff:
                     return [NSNumber numberWithInt:0];

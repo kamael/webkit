@@ -299,6 +299,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     case ScrollBarRole:
     case SliderRole:
     case StaticTextRole:
+    case SwitchRole:
     case TabRole:
     case TextFieldRole:
     case ToggleButtonRole:
@@ -566,6 +567,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
             break;
         case ToggleButtonRole:
         case CheckBoxRole:
+        case SwitchRole:
             traits |= ([self _axButtonTrait] | [self _axToggleTrait]);
             break;
         case HeadingRole:
@@ -645,6 +647,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
         case TabRole:
         case DocumentMathRole:
         case HorizontalRuleRole:
+        case SwitchRole:
             return true;
         case StaticTextRole:
         {
@@ -1762,10 +1765,9 @@ static void AXAttributeStringSetStyle(NSMutableAttributedString* attrString, Ren
                 
     int decor = style.textDecorationsInEffect();
     if ((decor & (TextDecorationUnderline | TextDecorationLineThrough)) != 0) {
-        // find colors using quirk mode approach (strict mode would use current
-        // color for all but the root line box, which would use getTextDecorationColors)
-        Color underline, overline, linethrough;
-        renderer->getTextDecorationColors(decor, underline, overline, linethrough);
+        Color underlineColor, overlineColor, linethroughColor;
+        TextDecorationStyle underlineStyle, overlineStyle, linethroughStyle;
+        renderer->getTextDecorationColorsAndStyles(decor, underlineColor, overlineColor, linethroughColor, underlineStyle, overlineStyle, linethroughStyle);
         
         if (decor & TextDecorationUnderline)
             AXAttributeStringSetNumber(attrString, UIAccessibilityTokenUnderline, [NSNumber numberWithBool:YES], range);

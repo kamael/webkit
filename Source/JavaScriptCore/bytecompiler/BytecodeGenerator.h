@@ -442,7 +442,6 @@ namespace JSC {
         void emitProfileControlFlow(int);
 
         RegisterID* emitLoad(RegisterID* dst, bool);
-        RegisterID* emitLoad(RegisterID* dst, double);
         RegisterID* emitLoad(RegisterID* dst, const Identifier&);
         RegisterID* emitLoad(RegisterID* dst, JSValue);
         RegisterID* emitLoadGlobalObject(RegisterID* dst);
@@ -668,7 +667,7 @@ namespace JSC {
 
         RegisterID* emitInitLazyRegister(RegisterID*);
         
-        RegisterID* emitConstructVarargs(RegisterID* dst, RegisterID* func, RegisterID* arguments, RegisterID* firstFreeRegister, int32_t firstVarArgOffset, RegisterID* profileHookRegister, const JSTextPosition& divot, const JSTextPosition& divotStart, const JSTextPosition& divotEnd);
+        RegisterID* emitConstructVarargs(RegisterID* dst, RegisterID* func, RegisterID* thisRegister, RegisterID* arguments, RegisterID* firstFreeRegister, int32_t firstVarArgOffset, RegisterID* profileHookRegister, const JSTextPosition& divot, const JSTextPosition& divotStart, const JSTextPosition& divotEnd);
         RegisterID* emitCallVarargs(OpcodeID, RegisterID* dst, RegisterID* func, RegisterID* thisRegister, RegisterID* arguments, RegisterID* firstFreeRegister, int32_t firstVarArgOffset, RegisterID* profileHookRegister, const JSTextPosition& divot, const JSTextPosition& divotStart, const JSTextPosition& divotEnd);
         RegisterID* initializeCapturedVariable(RegisterID* dst, const Identifier&, RegisterID*);
 
@@ -802,7 +801,6 @@ namespace JSC {
         // Constant pool
         IdentifierMap m_identifierMap;
         JSValueMap m_jsValueMap;
-        NumberMap m_numberMap;
         IdentifierStringMap m_stringMap;
 
         StaticPropertyAnalyzer m_staticPropertyAnalyzer { &m_instructions };
