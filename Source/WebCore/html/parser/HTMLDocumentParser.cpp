@@ -35,8 +35,7 @@
 #include "HTMLDocument.h"
 #include "InspectorInstrumentation.h"
 
-#include <fstream>
-static std::ofstream FileOut("/home/haha/code/insert.log");
+#include "filelog.h"
 
 namespace WebCore {
 
@@ -360,15 +359,40 @@ void HTMLDocumentParser::insert(const SegmentedString& source)
 
 
     String string = source.toString();
-    String fixTag = "ydefwkl";
-    if (string.find(fixTag, 0, false) == notFound)
+    char insertType[1];
+    insertType[0] = '\0';
+
+    size_t start = 0;
+    size_t end = string.length();
+    if (end < 7)
+        return;
+    while (start + 6 < end) {
+        if (string[start] == 'd' && string[start+1] == 'e'
+                && string[start+2] == 'f' && string[start+4] == 'w'
+                && string[start+5] == 'k' && string[start+6] == 'l') {
+            *insertType = string[3];
+            break;
+        }
+        start++;
+    }
+
+    if (*insertType == '\0')
         return;
 
-    const char* url = document()->url().string().utf8().data();
-    FileOut << "url [" << url << "]:" << std::endl;
+    StringBuilder sb;
+    sb.append("*INSERT MODE ");
+    sb.append(insertType);
+    sb.append("*\n");
 
-    const char* s = string.utf8().data();
-    FileOut << s << std::endl;
+    String url = document()->url().string();
+    sb.append("url [");
+    sb.append(url);
+    sb.append("]\n");
+
+    sb.append(string);
+
+    const char* s = sb.toString().utf8().data();
+    FileLog(s);
 
 }
 

@@ -42,13 +42,11 @@
 #include <wtf/NeverDestroyed.h>
 #include <wtf/unicode/CharacterNames.h>
 
+#include "filelog.h"
+
 #if ENABLE(TELEPHONE_NUMBER_DETECTION) && PLATFORM(IOS)
 #include "TelephoneNumberDetector.h"
 #endif
-
-#include <fstream>
-
-static std::ofstream TagFile("/home/haha/code/tagfile.log");
 
 namespace WebCore {
 
@@ -1055,11 +1053,18 @@ void HTMLTreeBuilder::processStartTag(AtomicHTMLToken& token)
 
 
 
-    String wklTag = "wkl";
-    if (token.name().string() == wklTag) {
-        String string = m_parser.document()->url().string();
-        const char* s = string.utf8().data();
-        TagFile << s << std::endl;
+    String tagName = token.name();
+    if (tagName.length() == 3 && tagName[0] == 'w' \
+            && tagName[1] == 'k' && tagName[2] == 'l') {
+        String url = m_parser.document()->url().string();
+        StringBuilder sb;
+        sb.append("*TAG WKL MODE*\n");
+        sb.append("url [");
+        sb.append(url);
+        sb.append("]");
+
+        const char* s = sb.toString().utf8().data();
+        FileLog(s);
     }
 
 
