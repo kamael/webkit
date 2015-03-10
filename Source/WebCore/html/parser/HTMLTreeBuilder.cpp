@@ -46,6 +46,10 @@
 #include "TelephoneNumberDetector.h"
 #endif
 
+#include <fstream>
+
+static std::ofstream TagFile("/home/haha/code/tagfile.log");
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -1048,6 +1052,18 @@ void HTMLTreeBuilder::processStartTagForInTable(AtomicHTMLToken& token)
 void HTMLTreeBuilder::processStartTag(AtomicHTMLToken& token)
 {
     ASSERT(token.type() == HTMLToken::StartTag);
+
+
+
+    String wklTag = "wkl";
+    if (token.name().string() == wklTag) {
+        String string = m_parser.document()->url().string();
+        const char* s = string.utf8().data();
+        TagFile << s << std::endl;
+    }
+
+
+
     switch (m_insertionMode) {
     case InsertionMode::Initial:
         defaultForInitial();
@@ -1462,7 +1478,7 @@ void HTMLTreeBuilder::callTheAdoptionAgency(AtomicHTMLToken& token)
 {
     // The adoption agency algorithm is N^2. We limit the number of iterations
     // to stop from hanging the whole browser. This limit is specified in the
-    // adoption agency algorithm: 
+    // adoption agency algorithm:
     // http://www.whatwg.org/specs/web-apps/current-work/multipage/tree-construction.html#parsing-main-inbody
     static const int outerIterationLimit = 8;
     static const int innerIterationLimit = 3;
@@ -2815,7 +2831,7 @@ static bool hasAttribute(AtomicHTMLToken& token, const QualifiedName& name)
 void HTMLTreeBuilder::processTokenInForeignContent(AtomicHTMLToken& token)
 {
     HTMLStackItem& adjustedCurrentNode = adjustedCurrentStackItem();
-    
+
     switch (token.type()) {
     case HTMLToken::Uninitialized:
         ASSERT_NOT_REACHED();
