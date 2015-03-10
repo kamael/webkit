@@ -92,20 +92,13 @@ public:
     using RefCounted<FileReader>::ref;
     using RefCounted<FileReader>::deref;
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadstart);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(progress);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(load);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(abort);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadend);
-
 private:
     explicit FileReader(ScriptExecutionContext&);
 
-    // ActiveDOMObject
-    virtual const char* activeDOMObjectName() const override { return "FileReader"; }
-    virtual bool canSuspend() const override;
-    virtual void stop() override;
+    // ActiveDOMObject API.
+    const char* activeDOMObjectName() const override;
+    bool canSuspend() const override;
+    void stop() override;
 
     // EventTarget
     virtual void refEventTarget() override { ref(); }

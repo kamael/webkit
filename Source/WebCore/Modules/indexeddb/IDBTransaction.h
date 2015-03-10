@@ -96,10 +96,6 @@ public:
     void setActive(bool);
     void setError(PassRefPtr<DOMError>, const String& errorMessage);
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(abort);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(complete);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
-
     void onAbort(PassRefPtr<IDBDatabaseError>);
     void onComplete();
 
@@ -111,7 +107,7 @@ public:
     virtual bool dispatchEvent(PassRefPtr<Event>) override;
 
     // ActiveDOMObject
-    virtual bool hasPendingActivity() const override;
+    bool hasPendingActivity() const override;
 
     using RefCounted<IDBTransaction>::ref;
     using RefCounted<IDBTransaction>::deref;
@@ -125,12 +121,12 @@ private:
     void registerOpenCursor(IDBCursor*);
     void unregisterOpenCursor(IDBCursor*);
 
-    // ActiveDOMObject
-    virtual bool canSuspend() const override;
-    virtual void stop() override;
-    virtual const char* activeDOMObjectName() const override { return "IDBTransaction"; }
+    // ActiveDOMObject API.
+    bool canSuspend() const override;
+    void stop() override;
+    const char* activeDOMObjectName() const override;
 
-    // EventTarget
+    // EventTarget API.
     virtual void refEventTarget() override { ref(); }
     virtual void derefEventTarget() override { deref(); }
 

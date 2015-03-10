@@ -167,6 +167,32 @@ static bool isLTROrRTLIgnoringCase(const AtomicString& dirAttributeValue)
     return equalIgnoringCase(dirAttributeValue, "rtl") || equalIgnoringCase(dirAttributeValue, "ltr");
 }
 
+enum class ContentEditableType {
+    Inherit,
+    True,
+    False,
+    PlaintextOnly
+};
+
+static inline ContentEditableType contentEditableType(const AtomicString& value)
+{
+    if (value.isNull())
+        return ContentEditableType::Inherit;
+    if (value.isEmpty() || equalIgnoringCase(value, "true"))
+        return ContentEditableType::True;
+    if (equalIgnoringCase(value, "false"))
+        return ContentEditableType::False;
+    if (equalIgnoringCase(value, "plaintext-only"))
+        return ContentEditableType::PlaintextOnly;
+
+    return ContentEditableType::Inherit;
+}
+
+static ContentEditableType contentEditableType(const HTMLElement& element)
+{
+    return contentEditableType(element.fastGetAttribute(contenteditableAttr));
+}
+
 void HTMLElement::collectStyleForPresentationAttribute(const QualifiedName& name, const AtomicString& value, MutableStyleProperties& style)
 {
     if (name == alignAttr) {
@@ -175,24 +201,26 @@ void HTMLElement::collectStyleForPresentationAttribute(const QualifiedName& name
         else
             addPropertyToPresentationAttributeStyle(style, CSSPropertyTextAlign, value);
     } else if (name == contenteditableAttr) {
-        if (value.isEmpty() || equalIgnoringCase(value, "true")) {
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitUserModify, CSSValueReadWrite);
+        CSSValueID userModifyValue = CSSValueReadWrite;
+        switch (contentEditableType(value)) {
+        case ContentEditableType::Inherit:
+            return;
+        case ContentEditableType::False:
+            userModifyValue = CSSValueReadOnly;
+            break;
+        case ContentEditableType::PlaintextOnly:
+            userModifyValue = CSSValueReadWritePlaintextOnly;
+            FALLTHROUGH;
+        case ContentEditableType::True:
             addPropertyToPresentationAttributeStyle(style, CSSPropertyWordWrap, CSSValueBreakWord);
             addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitNbspMode, CSSValueSpace);
             addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitLineBreak, CSSValueAfterWhiteSpace);
 #if PLATFORM(IOS)
             addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitTextSizeAdjust, CSSValueNone);
 #endif
-        } else if (equalIgnoringCase(value, "plaintext-only")) {
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitUserModify, CSSValueReadWritePlaintextOnly);
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWordWrap, CSSValueBreakWord);
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitNbspMode, CSSValueSpace);
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitLineBreak, CSSValueAfterWhiteSpace);
-#if PLATFORM(IOS)
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitTextSizeAdjust, CSSValueNone);
-#endif
-        } else if (equalIgnoringCase(value, "false"))
-            addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitUserModify, CSSValueReadOnly);
+            break;
+        }
+        addPropertyToPresentationAttributeStyle(style, CSSPropertyWebkitUserModify, userModifyValue);
     } else if (name == hiddenAttr) {
         addPropertyToPresentationAttributeStyle(style, CSSPropertyDisplay, CSSValueNone);
     } else if (name == draggableAttr) {
@@ -339,51 +367,35 @@ void HTMLElement::populateEventNameForAttributeLocalNameMap(HashMap<AtomicString
         map.add(customTable[i].attributeName.localName().impl(), customTable[i].eventName);
 }
 
-enum class ContentEditableType {
-    Inherit,
-    True,
-    False,
-    PlaintextOnly
-};
-
-static ContentEditableType contentEditableType(const HTMLElement& element)
+Node::Editability HTMLElement::editabilityFromContentEditableAttr(const Node& node)
 {
-    const AtomicString& value = element.fastGetAttribute(contenteditableAttr);
-
-    if (value.isNull())
-        return ContentEditableType::Inherit;
-    if (value.isEmpty() || equalIgnoringCase(value, "true"))
-        return ContentEditableType::True;
-    if (equalIgnoringCase(value, "false"))
-        return ContentEditableType::False;
-    if (equalIgnoringCase(value, "plaintext-only"))
-        return ContentEditableType::PlaintextOnly;
-
-    return ContentEditableType::Inherit;
-}
-
-bool HTMLElement::matchesReadWritePseudoClass() const
-{
-    const Element* currentElement = this;
+    const Node* currentNode = &node;
     do {
-        if (is<HTMLElement>(*currentElement)) {
-            switch (contentEditableType(downcast<HTMLElement>(*currentElement))) {
+        if (is<HTMLElement>(*currentNode)) {
+            switch (contentEditableType(downcast<HTMLElement>(*currentNode))) {
             case ContentEditableType::True:
+                return Node::Editability::CanEditRichly;
             case ContentEditableType::PlaintextOnly:
-                return true;
+                return Node::Editability::CanEditPlainText;
             case ContentEditableType::False:
-                return false;
+                return Node::Editability::ReadOnly;
             case ContentEditableType::Inherit:
                 break;
             }
         }
-        currentElement = currentElement->parentElement();
-    } while (currentElement);
+        currentNode = currentNode->parentNode();
+    } while (currentNode);
 
-    const Document& document = this->document();
+    const Document& document = node.document();
     if (is<HTMLDocument>(document))
-        return downcast<HTMLDocument>(document).inDesignMode();
-    return false;
+        return downcast<HTMLDocument>(document).inDesignMode() ? Node::Editability::CanEditRichly : Node::Editability::ReadOnly;
+
+    return Node::Editability::ReadOnly;
+}
+
+bool HTMLElement::matchesReadWritePseudoClass() const
+{
+    return editabilityFromContentEditableAttr(*this) != Editability::ReadOnly;
 }
 
 void HTMLElement::parseAttribute(const QualifiedName& name, const AtomicString& value)

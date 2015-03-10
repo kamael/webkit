@@ -54,7 +54,6 @@
     <ClCompile Include="..\wtf\Assertions.cpp" />
     <ClCompile Include="..\wtf\BitVector.cpp" />
     <ClCompile Include="..\wtf\CompilationThread.cpp" />
-    <ClCompile Include="..\wtf\Compression.cpp" />
     <ClCompile Include="..\wtf\CryptographicUtilities.cpp" />
     <ClCompile Include="..\wtf\CryptographicallyRandomNumber.cpp" />
     <ClCompile Include="..\wtf\CurrentTime.cpp" />
@@ -150,7 +149,10 @@
     <ClCompile Include="..\wtf\unicode\UTF8.cpp" />
     <ClCompile Include="..\wtf\win\MainThreadWin.cpp" />
     <ClCompile Include="..\wtf\win\RunLoopWin.cpp" />
+    <ClCompile Include="..\wtf\win\WorkItemWin.cpp" />
+    <ClCompile Include="..\wtf\win\WorkQueueWin.cpp" />
     <ClCompile Include="..\wtf\win\WTFDLL.cpp" />
+    <ClCompile Include="..\wtf\WorkQueue.cpp" />
     <ClCompile Include="..\wtf\WTFThreadData.cpp" />
     <ClCompile Include="..\wtf\SchedulePairCF.cpp" />
   </ItemGroup>
@@ -173,7 +175,6 @@
     <ClInclude Include="..\wtf\CheckedArithmetic.h" />
     <ClInclude Include="..\wtf\CheckedBoolean.h" />
     <ClInclude Include="..\wtf\Compiler.h" />
-    <ClInclude Include="..\wtf\Compression.h" />
     <ClInclude Include="..\wtf\CryptographicUtilities.h" />
     <ClInclude Include="..\wtf\CryptographicallyRandomNumber.h" />
     <ClInclude Include="..\wtf\CurrentTime.h" />
@@ -252,7 +253,6 @@
     <ClInclude Include="..\wtf\PassRef.h" />
     <ClInclude Include="..\wtf\PassRefPtr.h" />
     <ClInclude Include="..\wtf\Platform.h" />
-    <ClInclude Include="..\wtf\PossiblyNull.h" />
     <ClInclude Include="..\wtf\PrintStream.h" />
     <ClInclude Include="..\wtf\RAMSize.h" />
     <ClInclude Include="..\wtf\RandomNumber.h" />
@@ -309,6 +309,8 @@
     <ClInclude Include="..\wtf\Vector.h" />
     <ClInclude Include="..\wtf\VMTags.h" />
     <ClInclude Include="..\wtf\win\GDIObject.h" />
+    <ClInclude Include="..\wtf\win\WorkItemWin.h" />
+    <ClInclude Include="..\wtf\WorkQueue.h" />
     <ClInclude Include="..\wtf\WTFThreadData.h" />
   </ItemGroup>
   <ItemGroup>

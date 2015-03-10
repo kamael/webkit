@@ -49,7 +49,7 @@ UnlinkedFunctionExecutable* BuiltinExecutables::createBuiltinExecutable(const So
     std::unique_ptr<ProgramNode> program = parse<ProgramNode>(&m_vm, source, 0, Identifier(), JSParseBuiltin, JSParseProgramCode, error, &positionBeforeLastNewline);
 
     if (!program) {
-        dataLog("Fatal error compiling builtin function '", name.string(), "': ", error.m_message);
+        dataLog("Fatal error compiling builtin function '", name.string(), "': ", error.message());
         CRASH();
     }
 
@@ -83,11 +83,16 @@ UnlinkedFunctionExecutable* BuiltinExecutables::createBuiltinExecutable(const So
     return functionExecutable;
 }
 
+void BuiltinExecutables::finalize(Handle<Unknown>, void* context)
+{
+    static_cast<Weak<UnlinkedFunctionExecutable>*>(context)->clear();
+}
+
 #define DEFINE_BUILTIN_EXECUTABLES(name, functionName, length) \
 UnlinkedFunctionExecutable* BuiltinExecutables::name##Executable() \
 {\
     if (!m_##name##Executable)\
-        m_##name##Executable = createBuiltinExecutable(m_##name##Source, m_vm.propertyNames->builtinNames().functionName##PublicName());\
+        m_##name##Executable = Weak<UnlinkedFunctionExecutable>(createBuiltinExecutable(m_##name##Source, m_vm.propertyNames->builtinNames().functionName##PublicName()), this, &m_##name##Executable);\
     return m_##name##Executable.get();\
 }
 JSC_FOREACH_BUILTIN(DEFINE_BUILTIN_EXECUTABLES)

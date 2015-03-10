@@ -643,7 +643,9 @@ bool VisibleSelection::isContentEditable() const
 
 bool VisibleSelection::hasEditableStyle() const
 {
-    return isEditablePosition(start(), ContentIsEditable, DoNotUpdateStyle);
+    if (Node* containerNode = start().containerNode())
+        return containerNode->hasEditableStyle();
+    return false;
 }
 
 bool VisibleSelection::isContentRichlyEditable() const
@@ -667,7 +669,7 @@ bool VisibleSelection::isInPasswordField() const
     return is<HTMLInputElement>(textControl) && downcast<HTMLInputElement>(*textControl).isPasswordField();
 }
 
-#ifndef NDEBUG
+#if ENABLE(TREE_DEBUGGING)
 
 void VisibleSelection::debugPosition() const
 {
@@ -724,7 +726,7 @@ void VisibleSelection::showTreeForThis() const
 
 } // namespace WebCore
 
-#ifndef NDEBUG
+#if ENABLE(TREE_DEBUGGING)
 
 void showTree(const WebCore::VisibleSelection& sel)
 {

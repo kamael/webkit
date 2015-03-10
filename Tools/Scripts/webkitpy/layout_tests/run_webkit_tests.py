@@ -122,8 +122,8 @@ def parse_args(args):
             help="Enable Guard Malloc (OS X only)"),
         optparse.make_option("--threaded", action="store_true", default=False,
             help="Run a concurrent JavaScript thread with each test"),
-        optparse.make_option("--webkit-test-runner", "-2", action="store_true",
-            help="Use WebKitTestRunner rather than DumpRenderTree."),
+        optparse.make_option("--dump-render-tree", "-1", action="store_false", default=True, dest="webkit_test_runner",
+            help="Use DumpRenderTree rather than WebKitTestRunner."),
         # FIXME: We should merge this w/ --build-directory and only have one flag.
         optparse.make_option("--root", action="store",
             help="Path to a directory containing the executables needed to run tests."),
@@ -208,6 +208,8 @@ def parse_args(args):
         optparse.make_option("--java", action="store_true",
             default=False,
             help="Build java support files"),
+        optparse.make_option("--layout-tests-directory", action="store", default=None,
+            help="Override the default layout test directory.", dest="layout_tests_dir")
     ]))
 
     option_group_definitions.append(("Testing Options", [

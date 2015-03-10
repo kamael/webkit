@@ -46,11 +46,6 @@ public:
     double dischargingTime();
     double level();
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(chargingchange);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(chargingtimechange);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(dischargingtimechange);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(levelchange);
-
     void didChangeBatteryStatus(PassRefPtr<Event>, PassRefPtr<BatteryStatus>);
     void updateBatteryStatus(PassRefPtr<BatteryStatus>);
     void batteryControllerDestroyed() { m_batteryController = nullptr; }
@@ -58,18 +53,18 @@ public:
     using RefCounted<BatteryManager>::ref;
     using RefCounted<BatteryManager>::deref;
 
-    // ActiveDOMObject implementation.
-    virtual bool canSuspend() const override { return true; }
-    virtual void suspend(ReasonForSuspension) override;
-    virtual void resume() override;
-    virtual void stop() override;
-
 protected:
     virtual EventTargetData* eventTargetData() override { return &m_eventTargetData; }
     virtual EventTargetData& ensureEventTargetData() override { return m_eventTargetData; }
 
 private:
     explicit BatteryManager(Navigator*);
+
+    // ActiveDOMObject API.
+    bool canSuspend() const override;
+    void suspend(ReasonForSuspension) override;
+    void resume() override;
+    void stop() override;
 
     // EventTarget implementation.
     virtual void refEventTarget() override { ref(); }

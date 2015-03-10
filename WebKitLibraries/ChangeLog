@@ -1,3 +1,65 @@
+2015-03-09  Daniel Bates  <dabates@apple.com>
+
+        [iOS] Add WebKitSystemInterface for iOS 8.2
+        https://bugs.webkit.org/show_bug.cgi?id=142505
+
+        Reviewed by Andy Estes.
+
+        * libWebKitSystemInterfaceIOSDevice8.2.a: Added.
+        * libWebKitSystemInterfaceIOSSimulator8.2.a: Added.
+
+2015-03-06  Csaba Osztrogonác  <ossy@webkit.org>
+
+        Remove Mountain Lion libraries since ML isn't supported
+        https://bugs.webkit.org/show_bug.cgi?id=142332
+
+        Reviewed by Darin Adler.
+
+        * LLVMIncludesMountainLion.tar.bz2: Removed.
+        * LLVMLibrariesMountainLion.tar.bz2: Removed.
+
+2015-03-03  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] [Attachment] New Tests fail on Windows
+        https://bugs.webkit.org/show_bug.cgi?id=142017
+
+        Unreviewed test fix. Just activate the feature.
+
+        * win/tools/vsprops/FeatureDefines.props:
+        * win/tools/vsprops/FeatureDefinesCairo.props:
+
+2015-02-26  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] Unreviewed build fix after r180676.
+
+        I forgot to checkin one of the more important changes!
+
+        * win/tools/vsprops/common.props:
+
+2015-02-26  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] Make build logs more legible by reducing noise
+        https://bugs.webkit.org/show_bug.cgi?id=142034
+
+        Reviewed by Alexey Proskuryakov.
+
+        Modify batch files, makefiles, and DOS commands to remove
+        uninteresting/unhelpful output.
+
+        * win/tools/vsprops/common.props:
+
+2015-02-25  peavo@outlook.com  <peavo@outlook.com>
+
+        [WinCairo] WinLauncher is not starting on Vista.
+        https://bugs.webkit.org/show_bug.cgi?id=141905
+
+        Reviewed by Alex Christensen.
+
+        We have to soft link with Media Foundation functions to be able
+        to start on Vista and WinXP.
+
+        * win/tools/vsprops/WinCairo.props: Remove Media Foundation input libraries.
+
 2015-02-03  Brent Fulgham  <bfulgham@apple.com>
 
         [Win] Unreviewed build fix. Turn on feature flags for items

@@ -65,7 +65,7 @@ public:
 #endif
 
     // Used by canvas to gain raw pixel access
-    void paintCurrentFrameInContext(GraphicsContext*, const IntRect&);
+    void paintCurrentFrameInContext(GraphicsContext*, const FloatRect&);
 
     PassNativeImagePtr nativeImageForCurrentTime();
 
@@ -83,8 +83,6 @@ public:
     void webkitSetPresentationMode(const String&);
     String webkitPresentationMode() const;
     virtual void fullscreenModeChanged(VideoFullscreenMode) override;
-
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(webkitpresentationmodechanged);
 #endif
 
 private:

@@ -269,7 +269,12 @@ namespace JSC {
         ParserArena& parserArena() const { return m_scopeNode->parserArena(); }
         const CommonIdentifiers& propertyNames() const { return *m_vm->propertyNames; }
 
-        bool isConstructor() { return m_codeBlock->isConstructor(); }
+        bool isConstructor() const { return m_codeBlock->isConstructor(); }
+#if ENABLE(ES6_CLASS_SYNTAX)
+        bool constructorKindIsDerived() const { return m_codeBlock->constructorKindIsDerived(); }
+#else
+        bool constructorKindIsDerived() const { return false; }
+#endif
 
         ParserError generate();
 
@@ -290,7 +295,8 @@ namespace JSC {
 
         // Returns the register storing "this"
         RegisterID* thisRegister() { return &m_thisRegister; }
-        
+        RegisterID* newTarget() { return m_newTargetRegister; }
+
         RegisterID* scopeRegister() { return m_scopeRegister; }
 
         // Returns the next available temporary register. Registers returned by
@@ -443,7 +449,7 @@ namespace JSC {
 
         RegisterID* emitLoad(RegisterID* dst, bool);
         RegisterID* emitLoad(RegisterID* dst, const Identifier&);
-        RegisterID* emitLoad(RegisterID* dst, JSValue);
+        RegisterID* emitLoad(RegisterID* dst, JSValue, SourceCodeRepresentation = SourceCodeRepresentation::Other);
         RegisterID* emitLoadGlobalObject(RegisterID* dst);
 
         RegisterID* emitUnaryOp(OpcodeID, RegisterID* dst, RegisterID* src);
@@ -477,7 +483,7 @@ namespace JSC {
         RegisterID* emitGetById(RegisterID* dst, RegisterID* base, const Identifier& property);
         RegisterID* emitGetArgumentsLength(RegisterID* dst, RegisterID* base);
         RegisterID* emitPutById(RegisterID* base, const Identifier& property, RegisterID* value);
-        RegisterID* emitDirectPutById(RegisterID* base, const Identifier& property, RegisterID* value);
+        RegisterID* emitDirectPutById(RegisterID* base, const Identifier& property, RegisterID* value, PropertyNode::PutType);
         RegisterID* emitDeleteById(RegisterID* dst, RegisterID* base, const Identifier&);
         RegisterID* emitGetByVal(RegisterID* dst, RegisterID* base, RegisterID* property);
         RegisterID* emitGetArgumentByVal(RegisterID* dst, RegisterID* base, RegisterID* property);
@@ -503,6 +509,10 @@ namespace JSC {
 
         ResolveType resolveType();
         RegisterID* emitResolveConstantLocal(RegisterID* dst, const Identifier&, ResolveScopeInfo&);
+        // Calls tempDestination(dst), so it's safe to pass nullptr. It's also redundant to call
+        // tempDestination(dst) on the thing you pass as the destination. The reason why this
+        // calls tempDestination() for you is that it may not need a spare register. It may return
+        // scopeRegister() directly. So, you cannot rely on this storing to dst.
         RegisterID* emitResolveScope(RegisterID* dst, const Identifier&, ResolveScopeInfo&);
         RegisterID* emitGetFromScope(RegisterID* dst, RegisterID* scope, const Identifier&, ResolveMode, const ResolveScopeInfo&);
         RegisterID* emitPutToScope(RegisterID* scope, const Identifier&, RegisterID* value, ResolveMode, const ResolveScopeInfo&);
@@ -525,6 +535,9 @@ namespace JSC {
         RegisterID* emitNextEnumeratorPropertyName(RegisterID* dst, RegisterID* enumerator, RegisterID* index);
         RegisterID* emitToIndexString(RegisterID* dst, RegisterID* index);
 
+        RegisterID* emitIsObject(RegisterID* dst, RegisterID* src);
+        RegisterID* emitIsUndefined(RegisterID* dst, RegisterID* src);
+
         void emitReadOnlyExceptionIfNeeded();
 
         // Start a try block. 'start' must have been emitted.
@@ -539,6 +552,7 @@ namespace JSC {
         }
 
         void emitThrowReferenceError(const String& message);
+        void emitThrowTypeError(const String& message);
 
         void emitPushFunctionNameScope(RegisterID* dst, const Identifier& property, RegisterID* value, unsigned attributes);
         void emitPushCatchScope(RegisterID* dst, const Identifier& property, RegisterID* value, unsigned attributes);
@@ -613,16 +627,8 @@ namespace JSC {
 
         // Adds a var slot and maps it to the name ident in symbolTable().
         enum WatchMode { IsWatchable, NotWatchable };
-        RegisterID* addVar(const Identifier& ident, ConstantMode constantMode, WatchMode watchMode)
-        {
-            RegisterID* local;
-            addVar(ident, constantMode, watchMode, local);
-            return local;
-        }
+        RegisterID* addVar(const Identifier&, ConstantMode, WatchMode);
 
-        // Ditto. Returns true if a new RegisterID was added, false if a pre-existing RegisterID was re-used.
-        bool addVar(const Identifier&, ConstantMode, WatchMode, RegisterID*&);
-        
         // Adds an anonymous var slot. To give this slot a name, add it to symbolTable().
         RegisterID* addVar()
         {
@@ -654,7 +660,7 @@ namespace JSC {
 
         bool hasConstant(const Identifier&) const;
         unsigned addConstant(const Identifier&);
-        RegisterID* addConstantValue(JSValue);
+        RegisterID* addConstantValue(JSValue, SourceCodeRepresentation = SourceCodeRepresentation::Other);
         RegisterID* addConstantEmptyValue();
         unsigned addRegExp(RegExp*);
 
@@ -670,13 +676,6 @@ namespace JSC {
         RegisterID* emitConstructVarargs(RegisterID* dst, RegisterID* func, RegisterID* thisRegister, RegisterID* arguments, RegisterID* firstFreeRegister, int32_t firstVarArgOffset, RegisterID* profileHookRegister, const JSTextPosition& divot, const JSTextPosition& divotStart, const JSTextPosition& divotEnd);
         RegisterID* emitCallVarargs(OpcodeID, RegisterID* dst, RegisterID* func, RegisterID* thisRegister, RegisterID* arguments, RegisterID* firstFreeRegister, int32_t firstVarArgOffset, RegisterID* profileHookRegister, const JSTextPosition& divot, const JSTextPosition& divotStart, const JSTextPosition& divotEnd);
         RegisterID* initializeCapturedVariable(RegisterID* dst, const Identifier&, RegisterID*);
-
-        // We'll may want a non-return mode in future, but currently
-        // this is only used during emitReturn(). emitReturn() occurs
-        // with the novel state of having popped off all the local scope
-        // nodes, but not actually modify any internal stack depth tracking.
-        enum OwnScopeLookupRules { OwnScopeForReturn };
-        RegisterID* emitGetOwnScope(RegisterID* dst, const Identifier&, OwnScopeLookupRules);
 
     public:
         JSString* addStringConstant(const Identifier&);
@@ -770,6 +769,7 @@ namespace JSC {
         RegisterID* m_emptyValueRegister { nullptr };
         RegisterID* m_globalObjectRegister { nullptr };
         RegisterID* m_localArgumentsRegister { nullptr };
+        RegisterID* m_newTargetRegister { nullptr };
 
         Vector<Identifier, 16> m_watchableVariables;
         SegmentedVector<RegisterID, 32> m_constantPoolRegisters;
@@ -800,6 +800,8 @@ namespace JSC {
         
         // Constant pool
         IdentifierMap m_identifierMap;
+
+        typedef HashMap<EncodedJSValueWithRepresentation, unsigned, EncodedJSValueWithRepresentationHash, EncodedJSValueWithRepresentationHashTraits> JSValueMap;
         JSValueMap m_jsValueMap;
         IdentifierStringMap m_stringMap;
 

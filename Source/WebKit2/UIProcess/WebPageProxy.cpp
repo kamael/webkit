@@ -285,6 +285,7 @@ WebPageProxy::WebPageProxy(PageClient& pageClient, WebProcessProxy& process, uin
     , m_websiteDataStore(*configuration.websiteDataStore)
     , m_mainFrame(nullptr)
     , m_userAgent(standardUserAgent())
+    , m_treatsSHA1CertificatesAsInsecure(configuration.treatsSHA1SignedCertificatesAsInsecure)
 #if PLATFORM(IOS)
     , m_hasReceivedLayerTreeTransactionAfterDidCommitLoad(true)
     , m_firstLayerTreeTransactionIdAfterDidCommitLoad(0)
@@ -1228,6 +1229,21 @@ void WebPageProxy::requestScroll(const FloatPoint& scrollPosition, bool isProgra
     m_pageClient.requestScroll(scrollPosition, isProgrammaticScroll);
 }
 
+void WebPageProxy::setSuppressVisibilityUpdates(bool flag)
+{
+    if (m_suppressVisibilityUpdates == flag)
+        return;
+    m_suppressVisibilityUpdates = flag;
+
+    if (!m_suppressVisibilityUpdates) {
+#if PLATFORM(COCOA)
+        m_viewStateChangeDispatcher->schedule();
+#else
+        dispatchViewStateChange();
+#endif
+    }
+}
+
 void WebPageProxy::updateViewState(ViewState::Flags flagsToUpdate)
 {
     m_viewState &= ~flagsToUpdate;
@@ -1251,6 +1267,9 @@ void WebPageProxy::viewStateDidChange(ViewState::Flags mayHaveChanged, bool want
 {
     m_potentiallyChangedViewStateFlags |= mayHaveChanged;
     m_viewStateChangeWantsSynchronousReply = m_viewStateChangeWantsSynchronousReply || wantsSynchronousReply;
+
+    if (m_suppressVisibilityUpdates && dispatchMode != ViewStateChangeDispatchMode::Immediate)
+        return;
 
 #if PLATFORM(COCOA)
     bool isNewlyInWindow = !isInWindow() && (mayHaveChanged & ViewState::IsInWindow) && m_pageClient.isViewInWindow();
@@ -2800,8 +2819,10 @@ void WebPageProxy::didCommitLoadForFrame(uint64_t frameID, uint64_t navigationID
 
     auto transaction = m_pageLoadState.transaction();
 
-    if (frame->isMainFrame())
-        m_pageLoadState.didCommitLoad(transaction);
+    if (frame->isMainFrame()) {
+        bool hasInsecureCertificateChain = m_treatsSHA1CertificatesAsInsecure && certificateInfo.containsNonRootSHA1SignedCertificate();
+        m_pageLoadState.didCommitLoad(transaction, hasInsecureCertificateChain);
+    }
 
 #if USE(APPKIT)
     // FIXME (bug 59111): didCommitLoadForFrame comes too late when restoring a page from b/f cache, making us disable secure event mode in password fields.
@@ -3642,12 +3663,10 @@ void WebPageProxy::handleDownloadRequest(DownloadProxy* download)
     m_pageClient.handleDownloadRequest(download);
 }
 
-#if USE(COORDINATED_GRAPHICS_MULTIPROCESS)
 void WebPageProxy::didChangeContentSize(const IntSize& size)
 {
     m_pageClient.didChangeContentSize(size);
 }
-#endif
 
 #if ENABLE(INPUT_TYPE_COLOR)
 void WebPageProxy::showColorPicker(const WebCore::Color& initialColor, const IntRect& elementRect)

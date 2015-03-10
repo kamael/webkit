@@ -35,10 +35,11 @@
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/StringHash.h>
 
 namespace API {
 class Array;
-class UserContentFilter;
+class UserContentExtension;
 class UserScript;
 }
 
@@ -82,8 +83,9 @@ public:
     void removeUserMessageHandlerForName(const String&);
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    void addUserContentFilter(API::UserContentFilter&);
-    void removeAllUserContentFilters();
+    void addUserContentExtension(API::UserContentExtension&);
+    void removeUserContentExtension(const String&);
+    void removeAllUserContentExtensions();
 #endif
 
 private:
@@ -99,7 +101,7 @@ private:
     HashMap<uint64_t, RefPtr<WebScriptMessageHandler>> m_scriptMessageHandlers;
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    Ref<API::Array> m_userContentFilters;
+    HashMap<String, RefPtr<API::UserContentExtension>> m_userContentExtensions;
 #endif
 };
 

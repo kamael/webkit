@@ -39,7 +39,6 @@
 #include "SymbolTable.h"
 #include "VirtualRegister.h"
 
-#include <wtf/Compression.h>
 #include <wtf/RefCountedArray.h>
 #include <wtf/Vector.h>
 
@@ -50,7 +49,7 @@ class FunctionBodyNode;
 class FunctionExecutable;
 class FunctionParameters;
 class JSScope;
-struct ParserError;
+class ParserError;
 class ScriptExecutable;
 class SourceCode;
 class SourceProvider;
@@ -66,12 +65,13 @@ typedef unsigned UnlinkedObjectAllocationProfile;
 typedef unsigned UnlinkedLLIntCallLinkInfo;
 
 struct ExecutableInfo {
-    ExecutableInfo(bool needsActivation, bool usesEval, bool isStrictMode, bool isConstructor, bool isBuiltinFunction)
+    ExecutableInfo(bool needsActivation, bool usesEval, bool isStrictMode, bool isConstructor, bool isBuiltinFunction, bool constructorKindIsDerived)
         : m_needsActivation(needsActivation)
         , m_usesEval(usesEval)
         , m_isStrictMode(isStrictMode)
         , m_isConstructor(isConstructor)
         , m_isBuiltinFunction(isBuiltinFunction)
+        , m_constructorKindIsDerived(constructorKindIsDerived)
     {
     }
     bool m_needsActivation : 1;
@@ -79,6 +79,7 @@ struct ExecutableInfo {
     bool m_isStrictMode : 1;
     bool m_isConstructor : 1;
     bool m_isBuiltinFunction : 1;
+    bool m_constructorKindIsDerived : 1;
 };
 
 enum UnlinkedFunctionKind {
@@ -117,9 +118,8 @@ public:
             return JSParseStrict;
         return JSParseNormal;
     }
+    bool constructorKindIsDerived() const { return m_constructorKindIsDerived; }
 
-    unsigned firstLineOffset() const { return m_firstLineOffset; }
-    unsigned lineCount() const { return m_lineCount; }
     unsigned unlinkedFunctionNameStart() const { return m_unlinkedFunctionNameStart; }
     unsigned unlinkedBodyStartColumn() const { return m_unlinkedBodyStartColumn; }
     unsigned unlinkedBodyEndColumn() const { return m_unlinkedBodyEndColumn; }
@@ -132,9 +132,10 @@ public:
 
     UnlinkedFunctionCodeBlock* codeBlockFor(VM&, const SourceCode&, CodeSpecializationKind, DebuggerMode, ProfilerMode, bool bodyIncludesBraces, ParserError&);
 
-    static UnlinkedFunctionExecutable* fromGlobalCode(const Identifier&, ExecState*, Debugger*, const SourceCode&, JSObject** exception);
+    static UnlinkedFunctionExecutable* fromGlobalCode(const Identifier&, ExecState&, const SourceCode&, JSObject*& exception);
 
-    FunctionExecutable* link(VM&, const SourceCode&, size_t lineOffset);
+    FunctionExecutable* linkInsideExecutable(VM&, const SourceCode&);
+    FunctionExecutable* linkGlobalCode(VM&, const SourceCode&);
 
     void clearCodeForRecompilation()
     {
@@ -169,6 +170,7 @@ private:
     bool m_isInStrictContext : 1;
     bool m_hasCapturedVariables : 1;
     bool m_isBuiltinFunction : 1;
+    bool m_constructorKindIsDerived : 1;
 
     Identifier m_name;
     Identifier m_inferredName;
@@ -318,11 +320,12 @@ public:
     const Vector<Identifier>& identifiers() const { return m_identifiers; }
 
     size_t numberOfConstantRegisters() const { return m_constantRegisters.size(); }
-    unsigned addConstant(JSValue v)
+    unsigned addConstant(JSValue v, SourceCodeRepresentation sourceCodeRepresentation = SourceCodeRepresentation::Other)
     {
         unsigned result = m_constantRegisters.size();
         m_constantRegisters.append(WriteBarrier<Unknown>());
         m_constantRegisters.last().set(*m_vm, this, v);
+        m_constantsSourceCodeRepresentation.append(sourceCodeRepresentation);
         return result;
     }
     unsigned addOrFindConstant(JSValue);
@@ -330,6 +333,7 @@ public:
     const WriteBarrier<Unknown>& constantRegister(int index) const { return m_constantRegisters[index - FirstConstantRegisterIndex]; }
     ALWAYS_INLINE bool isConstantRegisterIndex(int index) const { return index >= FirstConstantRegisterIndex; }
     ALWAYS_INLINE JSValue getConstant(int index) const { return m_constantRegisters[index - FirstConstantRegisterIndex].get(); }
+    const Vector<SourceCodeRepresentation>& constantsSourceCodeRepresentation() { return m_constantsSourceCodeRepresentation; }
 
     // Jumps
     size_t numberOfJumpTargets() const { return m_jumpTargets.size(); }
@@ -341,12 +345,15 @@ public:
     bool isNumericCompareFunction() const { return m_isNumericCompareFunction; }
 
     bool isBuiltinFunction() const { return m_isBuiltinFunction; }
-    
+
+    bool constructorKindIsDerived() const { return m_constructorKindIsDerived; }
+
     void shrinkToFit()
     {
         m_jumpTargets.shrinkToFit();
         m_identifiers.shrinkToFit();
         m_constantRegisters.shrinkToFit();
+        m_constantsSourceCodeRepresentation.shrinkToFit();
         m_functionDecls.shrinkToFit();
         m_functionExprs.shrinkToFit();
         m_propertyAccessInstructions.shrinkToFit();
@@ -532,6 +539,7 @@ private:
     bool m_isConstructor : 1;
     bool m_hasCapturedVariables : 1;
     bool m_isBuiltinFunction : 1;
+    bool m_constructorKindIsDerived : 1;
     unsigned m_firstLine;
     unsigned m_lineCount;
     unsigned m_endColumn;
@@ -544,6 +552,7 @@ private:
     // Constant Pools
     Vector<Identifier> m_identifiers;
     Vector<WriteBarrier<Unknown>> m_constantRegisters;
+    Vector<SourceCodeRepresentation> m_constantsSourceCodeRepresentation;
     typedef Vector<WriteBarrier<UnlinkedFunctionExecutable>> FunctionExpressionVector;
     FunctionExpressionVector m_functionDecls;
     FunctionExpressionVector m_functionExprs;

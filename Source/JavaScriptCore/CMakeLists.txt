@@ -206,7 +206,7 @@ set(JavaScriptCore_SOURCES
     dfg/DFGPredictionPropagationPhase.cpp
     dfg/DFGPromotedHeapLocation.cpp
     dfg/DFGPureValue.cpp
-    dfg/DFGPutLocalSinkingPhase.cpp
+    dfg/DFGPutStackSinkingPhase.cpp
     dfg/DFGResurrectionForValidationPhase.cpp
     dfg/DFGSSACalculator.cpp
     dfg/DFGSSAConversionPhase.cpp
@@ -247,7 +247,6 @@ set(JavaScriptCore_SOURCES
     disassembler/LLVMDisassembler.cpp
     disassembler/X86Disassembler.cpp
 
-    heap/BlockAllocator.cpp
     heap/CodeBlockSet.cpp
     heap/ConservativeRoots.cpp
     heap/CopiedSpace.cpp
@@ -273,7 +272,6 @@ set(JavaScriptCore_SOURCES
     heap/MarkedBlock.cpp
     heap/MarkedSpace.cpp
     heap/SlotVisitor.cpp
-    heap/SuperRegion.cpp
     heap/Weak.cpp
     heap/WeakBlock.cpp
     heap/WeakHandleOwner.cpp
@@ -438,7 +436,7 @@ set(JavaScriptCore_RUNTIME_SOURCES
     runtime/ErrorInstance.cpp
     runtime/ErrorPrototype.cpp
     runtime/ExceptionFuzz.cpp
-    runtime/ExceptionHelpers.cpp 
+    runtime/ExceptionHelpers.cpp
     runtime/Executable.cpp
     runtime/FunctionConstructor.cpp
     runtime/FunctionExecutableDump.cpp
@@ -450,6 +448,7 @@ set(JavaScriptCore_RUNTIME_SOURCES
     runtime/InitializeThreading.cpp
     runtime/IntendedStructureChain.cpp
     runtime/InternalFunction.cpp
+    runtime/IteratorOperations.cpp
     runtime/JSAPIValueWrapper.cpp
     runtime/JSLexicalEnvironment.cpp
     runtime/JSArgumentsIterator.cpp
@@ -494,6 +493,7 @@ set(JavaScriptCore_RUNTIME_SOURCES
     runtime/JSSet.cpp
     runtime/JSSetIterator.cpp
     runtime/JSString.cpp
+    runtime/JSStringIterator.cpp
     runtime/JSStringJoiner.cpp
     runtime/JSSymbolTableObject.cpp
     runtime/JSTypedArrayConstructors.cpp
@@ -545,6 +545,8 @@ set(JavaScriptCore_RUNTIME_SOURCES
     runtime/SparseArrayValueMap.cpp
     runtime/StrictEvalActivation.cpp
     runtime/StringConstructor.cpp
+    runtime/StringIteratorConstructor.cpp
+    runtime/StringIteratorPrototype.cpp
     runtime/StringObject.cpp
     runtime/StringPrototype.cpp
     runtime/StringRecursionChecker.cpp
@@ -579,6 +581,7 @@ list(APPEND JavaScriptCore_SOURCES
 
 set(JavaScriptCore_LUT_FILES
     runtime/ArrayConstructor.cpp
+    runtime/ArrayIteratorPrototype.cpp
     runtime/ArrayPrototype.cpp
     runtime/BooleanPrototype.cpp
     runtime/DateConstructor.cpp
@@ -596,6 +599,7 @@ set(JavaScriptCore_LUT_FILES
     runtime/RegExpObject.cpp
     runtime/RegExpPrototype.cpp
     runtime/StringConstructor.cpp
+    runtime/StringIteratorPrototype.cpp
     runtime/SymbolPrototype.cpp
 )
 

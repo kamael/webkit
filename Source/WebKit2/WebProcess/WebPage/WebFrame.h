@@ -54,6 +54,7 @@ class URL;
 
 namespace WebKit {
 
+class InjectedBundleFileHandle;
 class InjectedBundleHitTestResult;
 class InjectedBundleNodeHandle;
 class InjectedBundleRangeHandle;
@@ -112,11 +113,13 @@ public:
     bool containsAnyFormControls() const;
     void stopLoading();
     bool handlesPageScaleGesture() const;
+    void setAccessibleName(const String&);
 
     static WebFrame* frameForContext(JSContextRef);
 
     JSValueRef jsWrapperForWorld(InjectedBundleNodeHandle*, InjectedBundleScriptWorld*);
     JSValueRef jsWrapperForWorld(InjectedBundleRangeHandle*, InjectedBundleScriptWorld*);
+    JSValueRef jsWrapperForWorld(InjectedBundleFileHandle*, InjectedBundleScriptWorld*);
 
     static String counterValue(JSObjectRef element);
 

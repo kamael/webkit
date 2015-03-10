@@ -1269,9 +1269,6 @@
     <ClCompile Include="..\platform\win\PopupMenuWin.cpp">
       <Filter>platform\win</Filter>
     </ClCompile>
-    <ClCompile Include="..\platform\win\ScrollbarThemeSafari.cpp">
-      <Filter>platform\win</Filter>
-    </ClCompile>
     <ClCompile Include="..\platform\win\ScrollbarThemeWin.cpp">
       <Filter>platform\win</Filter>
     </ClCompile>
@@ -2673,9 +2670,6 @@
     <ClCompile Include="..\rendering\RenderTheme.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
-    <ClCompile Include="..\rendering\RenderThemeSafari.cpp">
-      <Filter>rendering</Filter>
-    </ClCompile>
     <ClCompile Include="..\rendering\RenderThemeWin.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
@@ -3205,6 +3199,9 @@
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\dom\MessagePortChannel.cpp">
+      <Filter>dom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dom\MicroTask.cpp">
       <Filter>dom</Filter>
     </ClCompile>
     <ClCompile Include="..\dom\MouseEvent.cpp">
@@ -4825,9 +4822,6 @@
       <Filter>platform\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\platform\graphics\FontGenericFamilies.cpp">
-      <Filter>platform\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\platform\graphics\FontGlyphs.cpp">
       <Filter>platform\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\platform\graphics\FontFeatureSettings.cpp">
@@ -7228,6 +7222,21 @@
     <ClCompile Include="..\platform\graphics\Font.cpp">
       <Filter>platform\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\platform\cf\CoreMediaSoftLink.cpp">
+      <Filter>platform\cf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\cf\MediaAccessibilitySoftLink.cpp">
+      <Filter>platform\cf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\graphics\FontCascadeFonts.cpp">
+      <Filter>platform\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\html\HTMLAttachmentElement.cpp">
+      <Filter>html</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rendering\RenderAttachment.cpp">
+      <Filter>rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Modules\geolocation\Coordinates.h">
@@ -8331,9 +8340,6 @@
     <ClInclude Include="..\platform\win\PopupMenuWin.h">
       <Filter>platform\win</Filter>
     </ClInclude>
-    <ClInclude Include="..\platform\win\ScrollbarThemeSafari.h">
-      <Filter>platform\win</Filter>
-    </ClInclude>
     <ClInclude Include="..\platform\win\ScrollbarThemeWin.h">
       <Filter>platform\win</Filter>
     </ClInclude>
@@ -8828,9 +8834,6 @@
     </ClInclude>
     <ClInclude Include="..\platform\spi\cg\CoreGraphicsSPI.h">
       <Filter>platform\spi\cg</Filter>
-    </ClInclude>
-    <ClInclude Include="..\platform\spi\cf\CoreMediaSPI.h">
-      <Filter>platform\spi\cf</Filter>
     </ClInclude>
     <ClInclude Include="..\platform\sql\SQLiteDatabase.h">
       <Filter>platform\sql</Filter>
@@ -10270,6 +10273,9 @@
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\dom\MessagePortChannel.h">
+      <Filter>dom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dom\MicroTask.h">
       <Filter>dom</Filter>
     </ClInclude>
     <ClInclude Include="..\dom\MouseEvent.h">
@@ -12181,6 +12187,9 @@
     <ClInclude Include="..\platform\cf\CoreMediaSoftLink.h">
       <Filter>platform\cf</Filter>
     </ClInclude>
+    <ClInclude Include="..\platform\cf\MediaAccessibilitySoftLink.h">
+      <Filter>platform\cf</Filter>
+    </ClInclude>
     <ClInclude Include="..\platform\cf\win\CertificateCFWin.h">
       <Filter>platform\cf\win</Filter>
     </ClInclude>
@@ -12206,9 +12215,6 @@
       <Filter>platform\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\platform\graphics\FontGenericFamilies.h">
-      <Filter>platform\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\platform\graphics\FontGlyphs.h">
       <Filter>platform\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\platform\graphics\FontFeatureSettings.h">
@@ -14408,7 +14414,7 @@
     <ClInclude Include="..\rendering\BorderEdge.h">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="..\rendering\line\BreakingContextInlineHeaders.h">
+    <ClInclude Include="..\rendering\line\BreakingContext.h">
       <Filter>rendering\line</Filter>
     </ClInclude>
     <ClInclude Include="..\page\ContextMenuContext.h">
@@ -15179,6 +15185,21 @@
     <ClInclude Include="..\platform\graphics\Font.h">
       <Filter>platform\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="..\platform\graphics\FontCascadeFonts.h">
+      <Filter>platform\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Modules\streams\ReadableStreamSource.h">
+      <Filter>Modules\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Modules\streams\ReadableStream.h">
+      <Filter>Modules\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\html\HTMLAttachmentElement.h">
+      <Filter>html</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rendering\RenderAttachment.h">
+      <Filter>rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\css\CSSGrammar.y.in">
@@ -15375,9 +15396,6 @@
       <Filter>rendering</Filter>
     </CustomBuildStep>
     <CustomBuildStep Include="..\rendering\RenderMediaControls.h">
-      <Filter>rendering</Filter>
-    </CustomBuildStep>
-    <CustomBuildStep Include="..\rendering\RenderThemeSafari.h">
       <Filter>rendering</Filter>
     </CustomBuildStep>
     <CustomBuildStep Include="..\rendering\RenderThemeWin.h">

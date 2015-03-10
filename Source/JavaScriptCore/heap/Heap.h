@@ -23,7 +23,6 @@
 #define Heap_h
 
 #include "ArrayBuffer.h"
-#include "BlockAllocator.h"
 #include "CodeBlockSet.h"
 #include "CopyVisitor.h"
 #include "GCIncomingRefCountedSet.h"
@@ -119,7 +118,7 @@ public:
 
     VM* vm() const { return m_vm; }
     MarkedSpace& objectSpace() { return m_objectSpace; }
-    JS_EXPORT_PRIVATE static MachineThreads& machineThreads();
+    MachineThreads& machineThreads() { return m_machineThreads; }
 
     const SlotVisitor& slotVisitor() const { return m_slotVisitor; }
 
@@ -140,9 +139,11 @@ public:
     MarkedSpace::Subspace& subspaceForObjectWithoutDestructor() { return m_objectSpace.subspaceForObjectsWithoutDestructor(); }
     MarkedSpace::Subspace& subspaceForObjectNormalDestructor() { return m_objectSpace.subspaceForObjectsWithNormalDestructor(); }
     MarkedSpace::Subspace& subspaceForObjectsWithImmortalStructure() { return m_objectSpace.subspaceForObjectsWithImmortalStructure(); }
+    template<typename ClassType> MarkedSpace::Subspace& subspaceForObjectOfType();
     MarkedAllocator& allocatorForObjectWithoutDestructor(size_t bytes) { return m_objectSpace.allocatorFor(bytes); }
     MarkedAllocator& allocatorForObjectWithNormalDestructor(size_t bytes) { return m_objectSpace.normalDestructorAllocatorFor(bytes); }
     MarkedAllocator& allocatorForObjectWithImmortalStructureDestructor(size_t bytes) { return m_objectSpace.immortalStructureDestructorAllocatorFor(bytes); }
+    template<typename ClassType> MarkedAllocator& allocatorForObjectOfType(size_t bytes);
     CopiedAllocator& storageAllocator() { return m_storageSpace.allocator(); }
     CheckedBoolean tryAllocateStorage(JSCell* intendedOwner, size_t, void**);
     CheckedBoolean tryReallocateStorage(JSCell* intendedOwner, void**, size_t, size_t);
@@ -216,7 +217,6 @@ public:
     
     bool isDeferred() const { return !!m_deferralDepth || Options::disableGC(); }
 
-    BlockAllocator& blockAllocator();
     StructureIDTable& structureIDTable() { return m_structureIDTable; }
 
 #if USE(CF)
@@ -226,6 +226,9 @@ public:
     void removeCodeBlock(CodeBlock* cb) { m_codeBlocks.remove(cb); }
 
     static bool isZombified(JSCell* cell) { return *(void**)cell == zombifiedBits; }
+
+    void registerWeakGCMap(void* weakGCMap, std::function<void()> pruningCallback);
+    void unregisterWeakGCMap(void* weakGCMap);
 
 private:
     friend class CodeBlock;
@@ -256,6 +259,7 @@ private:
     void* allocateWithImmortalStructureDestructor(size_t); // For use with special objects whose Structures never die.
     void* allocateWithNormalDestructor(size_t); // For use with objects that inherit directly or indirectly from JSDestructibleObject.
     void* allocateWithoutDestructor(size_t); // For use with objects without destructors.
+    template<typename ClassType> void* allocateObjectOfType(size_t); // Chooses one of the methods above based on type.
 
     static const size_t minExtraCost = 256;
     static const size_t maxExtraCost = 1024 * 1024;
@@ -267,6 +271,8 @@ private:
     JS_EXPORT_PRIVATE bool isValidAllocation(size_t);
     JS_EXPORT_PRIVATE void reportExtraMemoryCostSlowCase(size_t);
 
+    void collectImpl(HeapOperation, void* stackOrigin, void* stackTop, MachineThreads::RegisterState&);
+
     void suspendCompilerThreads();
     void willStartCollection(HeapOperation collectionType);
     void deleteOldCode(double gcStartTime);
@@ -274,8 +280,8 @@ private:
     void flushWriteBarrierBuffer();
     void stopAllocation();
 
-    void markRoots(double gcStartTime);
-    void gatherStackRoots(ConservativeRoots&, void** dummy, MachineThreads::RegisterState& registers);
+    void markRoots(double gcStartTime, void* stackOrigin, void* stackTop, MachineThreads::RegisterState&);
+    void gatherStackRoots(ConservativeRoots&, void* stackOrigin, void* stackTop, MachineThreads::RegisterState&);
     void gatherJSStackRoots(ConservativeRoots&);
     void gatherScratchBufferRoots(ConservativeRoots&);
     void clearLivenessData();
@@ -298,6 +304,7 @@ private:
     void resetVisitors();
 
     void reapWeakHandles();
+    void pruneStaleEntriesFromWeakGCMaps();
     void sweepArrayBuffers();
     void snapshotMarkedSpace();
     void deleteSourceProviderCaches();
@@ -342,7 +349,6 @@ private:
     size_t m_totalBytesCopied;
     
     HeapOperation m_operationInProgress;
-    BlockAllocator m_blockAllocator;
     StructureIDTable m_structureIDTable;
     MarkedSpace m_objectSpace;
     CopiedSpace m_storageSpace;
@@ -355,6 +361,8 @@ private:
     Vector<Vector<ValueStringPair, 0, UnsafeVectorOverflow>*> m_tempSortingVectors;
     std::unique_ptr<HashSet<MarkedArgumentBuffer*>> m_markListSet;
 
+    MachineThreads m_machineThreads;
+    
     GCThreadSharedData m_sharedData;
     SlotVisitor m_slotVisitor;
     CopyVisitor m_copyVisitor;
@@ -389,6 +397,8 @@ private:
     Vector<RetainPtr<CFTypeRef>> m_delayedReleaseObjects;
     unsigned m_delayedReleaseRecursionCount;
 #endif
+
+    HashMap<void*, std::function<void()>> m_weakGCMaps;
 };
 
 } // namespace JSC

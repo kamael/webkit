@@ -28,68 +28,34 @@
 
 #if ENABLE(CONTENT_FILTERING)
 
-#include <wtf/PassRefPtr.h>
-#include <wtf/RetainPtr.h>
-
-#if PLATFORM(IOS)
-#include <functional>
-#endif
-
-#if PLATFORM(COCOA)
-OBJC_CLASS NSData;
-OBJC_CLASS NSKeyedArchiver;
-OBJC_CLASS NSKeyedUnarchiver;
-OBJC_CLASS WebFilterEvaluator;
-#endif
-
-#define HAVE_NE_FILTER_SOURCE TARGET_OS_EMBEDDED || (!TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101000 && CPU(X86_64))
-
-#if HAVE(NE_FILTER_SOURCE)
-#import <dispatch/dispatch.h>
-OBJC_CLASS NEFilterSource;
-OBJC_CLASS NSMutableData;
-#endif
+#include "ContentFilterUnblockHandler.h"
+#include <wtf/Vector.h>
 
 namespace WebCore {
 
-class ResourceRequest;
 class ResourceResponse;
 
 class ContentFilter {
 public:
-    static bool canHandleResponse(const ResourceResponse&);
+    template <typename T> static void addType() { types().append(type<T>()); }
 
-    explicit ContentFilter(const ResourceResponse&);
-    WEBCORE_EXPORT ~ContentFilter();
+    static std::unique_ptr<ContentFilter> createIfNeeded(const ResourceResponse&);
 
-    void addData(const char* data, int length);
-    void finishedAddingData();
-    bool needsMoreData() const;
-    bool didBlockData() const;
-    const char* getReplacementData(int& length) const;
-
-#if PLATFORM(COCOA)
-    WEBCORE_EXPORT ContentFilter();
-    WEBCORE_EXPORT void encode(NSKeyedArchiver *) const;
-    WEBCORE_EXPORT static bool decode(NSKeyedUnarchiver *, ContentFilter&);
-#endif
-
-#if PLATFORM(IOS)
-    WEBCORE_EXPORT bool handleUnblockRequestAndDispatchIfSuccessful(const ResourceRequest&, std::function<void()>);
-#endif
+    virtual ~ContentFilter() { }
+    virtual void addData(const char* data, int length) = 0;
+    virtual void finishedAddingData() = 0;
+    virtual bool needsMoreData() const = 0;
+    virtual bool didBlockData() const = 0;
+    virtual const char* getReplacementData(int& length) const = 0;
+    virtual ContentFilterUnblockHandler unblockHandler() const = 0;
 
 private:
-#if PLATFORM(COCOA)
-    RetainPtr<WebFilterEvaluator> m_platformContentFilter;
-    RetainPtr<NSData> m_replacementData;
-#endif
-
-#if HAVE(NE_FILTER_SOURCE)
-    long m_neFilterSourceStatus;
-    RetainPtr<NEFilterSource> m_neFilterSource;
-    dispatch_queue_t m_neFilterSourceQueue;
-    RetainPtr<NSMutableData> m_originalData;
-#endif
+    struct Type {
+        const std::function<bool(const ResourceResponse&)> canHandleResponse;
+        const std::function<std::unique_ptr<ContentFilter>(const ResourceResponse&)> create;
+    };
+    template <typename T> static Type type() { return { T::canHandleResponse, T::create }; }
+    WEBCORE_EXPORT static Vector<Type>& types();
 };
 
 } // namespace WebCore

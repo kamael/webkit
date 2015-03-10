@@ -180,6 +180,7 @@ enum AccessibilityRole {
     RulerMarkerRole,
     ScrollAreaRole,
     ScrollBarRole,
+    SearchFieldRole,
     SheetRole,
     SliderRole,
     SliderThumbRole,
@@ -976,6 +977,11 @@ public:
     // allows for an AccessibilityObject to update its render tree or perform
     // other operations update type operations
     void updateBackingStore();
+    
+#if PLATFORM(COCOA) && !PLATFORM(IOS)
+    bool caretBrowsingEnabled() const;
+    void setCaretBrowsingEnabled(bool);
+#endif
     
 protected:
     AXID m_id;

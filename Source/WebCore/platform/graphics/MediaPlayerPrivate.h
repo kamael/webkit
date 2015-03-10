@@ -48,6 +48,9 @@ public:
 #if ENABLE(MEDIA_SOURCE)
     virtual void load(const String& url, MediaSourcePrivateClient*) = 0;
 #endif
+#if ENABLE(MEDIA_STREAM)
+    virtual void load(MediaStreamPrivate*) = 0;
+#endif
     virtual void cancelLoad() = 0;
     
     virtual void prepareToPlay() { }
@@ -74,7 +77,7 @@ public:
 
     virtual bool canSaveMediaData() const { return false; }
 
-    virtual IntSize naturalSize() const = 0;
+    virtual FloatSize naturalSize() const = 0;
 
     virtual bool hasVideo() const = 0;
     virtual bool hasAudio() const = 0;
@@ -137,9 +140,9 @@ public:
 
     virtual void setSize(const IntSize&) = 0;
 
-    virtual void paint(GraphicsContext*, const IntRect&) = 0;
+    virtual void paint(GraphicsContext*, const FloatRect&) = 0;
 
-    virtual void paintCurrentFrameInContext(GraphicsContext* c, const IntRect& r) { paint(c, r); }
+    virtual void paintCurrentFrameInContext(GraphicsContext* c, const FloatRect& r) { paint(c, r); }
     virtual bool copyVideoTextureToPlatformTexture(GraphicsContext3D*, Platform3DObject, GC3Dint, GC3Denum, GC3Denum, bool, bool) { return false; }
     virtual PassNativeImagePtr nativeImageForCurrentTime() { return nullptr; }
 

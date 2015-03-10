@@ -58,17 +58,19 @@ public:
     static Ref<ReadableStream> create(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
     virtual ~ReadableStream();
 
-    virtual const char* activeDOMObjectName() const override { return "ReadableStream"; }
-
     // JS API implementation.
     String state() const;
 
-    typedef std::function<void(RefPtr<ReadableStream>)> SuccessCallback;
+    typedef std::function<void()> SuccessCallback;
     void closed(SuccessCallback);
     void ready(SuccessCallback);
 
 private:
     ReadableStream(ScriptExecutionContext&, Ref<ReadableStreamSource>&&);
+
+    // ActiveDOMObject API.
+    const char* activeDOMObjectName() const override;
+    bool canSuspend() const override;
 
     State m_state;
     Ref<ReadableStreamSource> m_source;

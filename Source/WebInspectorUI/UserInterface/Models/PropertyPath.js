@@ -44,10 +44,17 @@ WebInspector.PropertyPath = function(object, pathComponent, parent, isPrototype)
 };
 
 WebInspector.PropertyPath.SpecialPathComponent = {
-    CollectionIndex: "@collection[?]",
     InternalPropertyName: "@internal",
     SymbolPropertyName: "@symbol",
-    GetterPropertyName: "@getter",
+    MapKey: "@mapkey",
+    MapValue: "@mapvalue",
+    SetIndex: "@setindex",
+};
+
+WebInspector.PropertyPath.Type = {
+    Value: "value",
+    Getter: "getter",
+    Setter: "setter",
 };
 
 WebInspector.PropertyPath.prototype = {
@@ -107,17 +114,46 @@ WebInspector.PropertyPath.prototype = {
         return components.join("");
     },
 
-    isRoot: function()
+    get reducedPath()
+    {
+        // The display path for a value should not include __proto__.
+        // The path for "foo.__proto__.bar.__proto__.x" is better shown as "foo.bar.x".
+        // FIXME: We should keep __proto__ if this property was overridden.
+        var components = [];
+
+        var p = this;
+
+        // Include trailing __proto__s.
+        for (; p && p.isPrototype; p = p.parent)
+            components.push(p.pathComponent);
+
+        // Skip other __proto__s.
+        for (; p && p.pathComponent; p = p.parent) {
+            if (p.isPrototype)
+                continue;
+            components.push(p.pathComponent);
+        }
+
+        components.reverse();
+        return components.join("");        
+    },
+
+    displayPath(type)
+    {
+        return type === WebInspector.PropertyPath.Type.Value ? this.reducedPath : this.fullPath;
+    },
+
+    isRoot()
     {
         return !this._parent;
     },
 
-    isPathComponentImpossible: function()
+    isPathComponentImpossible()
     {
         return this._pathComponent && this._pathComponent.startsWith("@");
     },
 
-    isFullPathImpossible: function()
+    isFullPathImpossible()
     {
         if (this.isPathComponentImpossible())
             return true;
@@ -128,41 +164,84 @@ WebInspector.PropertyPath.prototype = {
         return false;
     },
 
-    appendPropertyName: function(object, propertyName)
+    appendPropertyName(object, propertyName)
     {
         var isPrototype = propertyName === "__proto__";
-        var component = this._canPropertyNameBeDotAccess(propertyName) ? "." + propertyName : "[\"" + propertyName.replace(/"/, "\\\"") + "\"]";
+        var component = this._canPropertyNameBeDotAccess(propertyName) ? "." + propertyName : "[" + doubleQuotedString(propertyName) + "]";
         return new WebInspector.PropertyPath(object, component, this, isPrototype);
     },
 
-    appendPropertySymbol: function(object, symbolName)
+    appendPropertySymbol(object, symbolName)
     {
         var component = WebInspector.PropertyPath.SpecialPathComponent.SymbolPropertyName + (symbolName.length ? "(" + symbolName + ")" : "");
         return new WebInspector.PropertyPath(object, component, this);
     },
 
-    appendInternalPropertyName: function(object, propertyName)
+    appendInternalPropertyName(object, propertyName)
     {
         var component = WebInspector.PropertyPath.SpecialPathComponent.InternalPropertyName + "[" + propertyName + "]";
         return new WebInspector.PropertyPath(object, component, this);
     },
 
-    appendArrayIndex: function(object, indexString)
+    appendGetterPropertyName(object, propertyName)
+    {
+        var component = ".__lookupGetter__(" + doubleQuotedString(propertyName) + ")";
+        return new WebInspector.PropertyPath(object, component, this);
+    },
+
+    appendSetterPropertyName(object, propertyName)
+    {
+        var component = ".__lookupSetter__(" + doubleQuotedString(propertyName) + ")";
+        return new WebInspector.PropertyPath(object, component, this);
+    },
+
+    appendArrayIndex(object, indexString)
     {
         var component = "[" + indexString + "]";
         return new WebInspector.PropertyPath(object, component, this);
     },
 
-    appendCollectionIndex: function(object)
+    appendMapKey(object)
     {
-        var component = WebInspector.PropertyPath.SpecialPathComponent.CollectionIndex;
+        var component = WebInspector.PropertyPath.SpecialPathComponent.MapKey;
         return new WebInspector.PropertyPath(object, component, this);
     },
 
-    appendPropertyDescriptor: function(object, descriptor)
+    appendMapValue(object, keyObject)
+    {
+        console.assert(!keyObject || keyObject instanceof WebInspector.RemoteObject);
+
+        if (keyObject && keyObject.hasValue()) {
+            if (keyObject.type === "string") {
+                var component = ".get(" + doubleQuotedString(keyObject.description) + ")";
+                return new WebInspector.PropertyPath(object, component, this);                
+            }
+
+            var component = ".get(" + keyObject.description + ")";
+            return new WebInspector.PropertyPath(object, component, this);                
+        }
+            
+        var component = WebInspector.PropertyPath.SpecialPathComponent.MapValue;
+        return new WebInspector.PropertyPath(object, component, this);
+    },
+
+    appendSetIndex(object)
+    {
+        var component = WebInspector.PropertyPath.SpecialPathComponent.SetIndex;
+        return new WebInspector.PropertyPath(object, component, this);
+    },
+    
+    appendPropertyDescriptor(object, descriptor, type)
     {
         if (descriptor.isInternalProperty)
             return this.appendInternalPropertyName(object, descriptor.name);
+
+        if (type === WebInspector.PropertyPath.Type.Getter)
+            return this.appendGetterPropertyName(object, descriptor.name);
+        if (type === WebInspector.PropertyPath.Type.Setter)
+            return this.appendSetterPropertyName(object, descriptor.name);
+
+        console.assert(type === WebInspector.PropertyPath.Type.Value);
 
         // FIXME: We don't yet have Symbol descriptors.
 
@@ -174,7 +253,7 @@ WebInspector.PropertyPath.prototype = {
 
     // Private
 
-    _canPropertyNameBeDotAccess: function(propertyName)
+    _canPropertyNameBeDotAccess(propertyName)
     {
         return /^(?![0-9])\w+$/.test(propertyName);
     }

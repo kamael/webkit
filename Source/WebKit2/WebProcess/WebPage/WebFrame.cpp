@@ -28,6 +28,7 @@
 
 #include "APIArray.h"
 #include "DownloadManager.h"
+#include "InjectedBundleFileHandle.h"
 #include "InjectedBundleHitTestResult.h"
 #include "InjectedBundleNodeHandle.h"
 #include "InjectedBundleRangeHandle.h"
@@ -49,6 +50,7 @@
 #include <WebCore/Chrome.h>
 #include <WebCore/DocumentLoader.h>
 #include <WebCore/EventHandler.h>
+#include <WebCore/File.h>
 #include <WebCore/Frame.h>
 #include <WebCore/FrameSnapshotting.h>
 #include <WebCore/FrameView.h>
@@ -60,6 +62,7 @@
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/JSCSSStyleDeclaration.h>
 #include <WebCore/JSElement.h>
+#include <WebCore/JSFile.h>
 #include <WebCore/JSRange.h>
 #include <WebCore/MainFrame.h>
 #include <WebCore/NetworkingContext.h>
@@ -507,6 +510,25 @@ bool WebFrame::handlesPageScaleGesture() const
     return pluginView && pluginView->handlesPageScaleFactor();
 }
 
+void WebFrame::setAccessibleName(const String& accessibleName)
+{
+    if (!AXObjectCache::accessibilityEnabled())
+        return;
+    
+    if (!m_coreFrame)
+        return;
+
+    auto* document = m_coreFrame->document();
+    if (!document)
+        return;
+    
+    auto* rootObject = document->axObjectCache()->rootObject();
+    if (!rootObject)
+        return;
+
+    rootObject->setAccessibleName(accessibleName);
+}
+
 IntRect WebFrame::contentBounds() const
 {    
     if (!m_coreFrame)
@@ -683,6 +705,18 @@ JSValueRef WebFrame::jsWrapperForWorld(InjectedBundleRangeHandle* rangeHandle, I
 
     JSLockHolder lock(exec);
     return toRef(exec, toJS(exec, globalObject, rangeHandle->coreRange()));
+}
+
+JSValueRef WebFrame::jsWrapperForWorld(InjectedBundleFileHandle* fileHandle, InjectedBundleScriptWorld* world)
+{
+    if (!m_coreFrame)
+        return nullptr;
+
+    JSDOMWindow* globalObject = m_coreFrame->script().globalObject(world->coreWorld());
+    ExecState* exec = globalObject->globalExec();
+
+    JSLockHolder lock(exec);
+    return toRef(exec, toJS(exec, globalObject, fileHandle->coreFile()));
 }
 
 String WebFrame::counterValue(JSObjectRef element)

@@ -100,9 +100,29 @@ void NotificationCenter::stop()
 {
     if (!m_client)
         return;
-    m_client->cancelRequestsForPermission(scriptExecutionContext());
-    m_client->clearNotifications(scriptExecutionContext());
-    m_client = 0;
+
+    // Clear m_client now because the call to NotificationClient::clearNotifications() below potentially
+    // destroy the NotificationCenter. This is because the notifications will be destroyed and unref the
+    // NotificationCenter.
+    auto& client = *m_client;
+    m_client = nullptr;
+
+    client.cancelRequestsForPermission(scriptExecutionContext());
+    client.clearNotifications(scriptExecutionContext());
+    // Do not attempt the access |this|, the NotificationCenter may be destroyed at this point.
+}
+
+const char* NotificationCenter::activeDOMObjectName() const
+{
+    return "NotificationCenter";
+}
+
+bool NotificationCenter::canSuspend() const
+{
+    // We don't need to worry about Notifications because those are ActiveDOMObject too.
+    // The NotificationCenter can safely be suspended if there are no pending permission
+    // requests.
+    return m_callbacks.isEmpty() && (!m_client || !m_client->hasPendingPermissionRequests(scriptExecutionContext()));
 }
 
 void NotificationCenter::requestTimedOut(NotificationCenter::NotificationRequestCallback* request)

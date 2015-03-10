@@ -307,10 +307,10 @@ Heap::Heap(VM* vm, HeapType heapType)
     , m_totalBytesVisited(0)
     , m_totalBytesCopied(0)
     , m_operationInProgress(NoOperation)
-    , m_blockAllocator()
     , m_objectSpace(this)
     , m_storageSpace(this)
     , m_extraMemoryUsage(0)
+    , m_machineThreads(this)
     , m_sharedData(vm)
     , m_slotVisitor(m_sharedData)
     , m_copyVisitor(m_sharedData)
@@ -348,18 +348,6 @@ Heap::~Heap()
 {
 }
 
-MachineThreads& Heap::machineThreads()
-{
-    static std::once_flag initializeMachineThreadsOnceFlag;
-    static MachineThreads* machineThreads = nullptr;
-
-    std::call_once(initializeMachineThreadsOnceFlag, [] {
-        machineThreads = new MachineThreads();
-    });
-
-    return *machineThreads;
-}
-    
 bool Heap::isPagedOut(double deadline)
 {
     return m_objectSpace.isPagedOut(deadline) || m_storageSpace.isPagedOut(deadline);
@@ -379,10 +367,25 @@ void Heap::lastChanceToFinalize()
 void Heap::releaseDelayedReleasedObjects()
 {
 #if USE(CF)
+    // We need to guard against the case that releasing an object can create more objects due to the
+    // release calling into JS. When those JS call(s) exit and all locks are being dropped we end up
+    // back here and could try to recursively release objects. We guard that with a recursive entry
+    // count. Only the initial call will release objects, recursive calls simple return and let the
+    // the initial call to the function take care of any objects created during release time.
+    // This also means that we need to loop until there are no objects in m_delayedReleaseObjects
+    // and use a temp Vector for the actual releasing.
     if (!m_delayedReleaseRecursionCount++) {
         while (!m_delayedReleaseObjects.isEmpty()) {
-            RetainPtr<CFTypeRef> objectToRelease = m_delayedReleaseObjects.takeLast();
-            objectToRelease.clear();
+            ASSERT(m_vm->currentThreadIsHoldingAPILock());
+
+            Vector<RetainPtr<CFTypeRef>> objectsToRelease = WTF::move(m_delayedReleaseObjects);
+
+            {
+                // We need to drop locks before calling out to arbitrary code.
+                JSLock::DropAllLocks dropAllLocks(m_vm);
+
+                objectsToRelease.clear();
+            }
         }
     }
     m_delayedReleaseRecursionCount--;
@@ -509,7 +512,7 @@ void Heap::getConservativeRegisterRoots(HashSet<JSCell*>& roots)
     }
 }
 
-void Heap::markRoots(double gcStartTime)
+void Heap::markRoots(double gcStartTime, void* stackOrigin, void* stackTop, MachineThreads::RegisterState& calleeSavedRegisters)
 {
     SamplingRegion samplingRegion("Garbage Collection: Marking");
 
@@ -530,14 +533,10 @@ void Heap::markRoots(double gcStartTime)
 
     // We gather conservative roots before clearing mark bits because conservative
     // gathering uses the mark bits to determine whether a reference is valid.
-    void* dummy;
-    ALLOCATE_AND_GET_REGISTER_STATE(registers);
     ConservativeRoots conservativeRoots(&m_objectSpace.blocks(), &m_storageSpace);
-    gatherStackRoots(conservativeRoots, &dummy, registers);
+    gatherStackRoots(conservativeRoots, stackOrigin, stackTop, calleeSavedRegisters);
     gatherJSStackRoots(conservativeRoots);
     gatherScratchBufferRoots(conservativeRoots);
-
-    sanitizeStackForVM(m_vm);
 
     clearLivenessData();
 
@@ -594,11 +593,11 @@ void Heap::copyBackingStores()
         m_storageSpace.doneCopying();
 }
 
-void Heap::gatherStackRoots(ConservativeRoots& roots, void** dummy, MachineThreads::RegisterState& registers)
+void Heap::gatherStackRoots(ConservativeRoots& roots, void* stackOrigin, void* stackTop, MachineThreads::RegisterState& calleeSavedRegisters)
 {
     GCPHASE(GatherStackRoots);
     m_jitStubRoutines.clearMarks();
-    machineThreads().gatherConservativeRoots(roots, m_jitStubRoutines, m_codeBlocks, dummy, registers);
+    m_machineThreads.gatherConservativeRoots(roots, m_jitStubRoutines, m_codeBlocks, stackOrigin, stackTop, calleeSavedRegisters);
 }
 
 void Heap::gatherJSStackRoots(ConservativeRoots& roots)
@@ -999,7 +998,17 @@ void Heap::collectAllGarbage()
 
 static double minute = 60.0;
 
-void Heap::collect(HeapOperation collectionType)
+NEVER_INLINE void Heap::collect(HeapOperation collectionType)
+{
+    void* stackTop;
+    ALLOCATE_AND_GET_REGISTER_STATE(registers);
+
+    collectImpl(collectionType, wtfThreadData().stack().origin(), &stackTop, registers);
+
+    sanitizeStackForVM(m_vm);
+}
+
+NEVER_INLINE void Heap::collectImpl(HeapOperation collectionType, void* stackOrigin, void* stackTop, MachineThreads::RegisterState& calleeSavedRegisters)
 {
 #if ENABLE(ALLOCATION_LOGGING)
     dataLogF("JSC GC starting collection.\n");
@@ -1044,7 +1053,7 @@ void Heap::collect(HeapOperation collectionType)
     stopAllocation();
     flushWriteBarrierBuffer();
 
-    markRoots(gcStartTime);
+    markRoots(gcStartTime, stackOrigin, stackTop, calleeSavedRegisters);
 
     if (m_verifier) {
         m_verifier->gatherLiveObjects(HeapVerifier::Phase::AfterMarking);
@@ -1056,6 +1065,7 @@ void Heap::collect(HeapOperation collectionType)
         vm()->typeProfiler()->invalidateTypeSetCache();
 
     reapWeakHandles();
+    pruneStaleEntriesFromWeakGCMaps();
     sweepArrayBuffers();
     snapshotMarkedSpace();
 
@@ -1167,6 +1177,15 @@ void Heap::reapWeakHandles()
 {
     GCPHASE(ReapingWeakHandles);
     m_objectSpace.reapWeakSets();
+}
+
+void Heap::pruneStaleEntriesFromWeakGCMaps()
+{
+    GCPHASE(PruningStaleEntriesFromWeakGCMaps);
+    if (m_operationInProgress != FullCollection)
+        return;
+    for (auto& pruneCallback : m_weakGCMaps.values())
+        pruneCallback();
 }
 
 void Heap::sweepArrayBuffers()

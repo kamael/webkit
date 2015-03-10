@@ -74,6 +74,9 @@ class AuthenticationChallenge;
 #if ENABLE(MEDIA_SOURCE)
 class MediaSourcePrivateClient;
 #endif
+#if ENABLE(MEDIA_STREAM)
+class MediaStreamPrivate;
+#endif
 class MediaPlayerPrivateInterface;
 class TextTrackRepresentation;
 struct Cookie;
@@ -113,12 +116,18 @@ struct MediaEngineSupportParameters {
 #if ENABLE(MEDIA_SOURCE)
     bool isMediaSource;
 #endif
+#if ENABLE(MEDIA_STREAM)
+    bool isMediaStream;
+#endif
 
     MediaEngineSupportParameters()
 #if ENABLE(MEDIA_SOURCE)
         : isMediaSource(false)
 #endif
     {
+#if ENABLE(MEDIA_STREAM)
+        isMediaStream = false;
+#endif
     }
 };
 
@@ -311,7 +320,7 @@ public:
     String errorLog() const;
 #endif
 
-    IntSize naturalSize();
+    FloatSize naturalSize();
     bool hasVideo() const;
     bool hasAudio() const;
 
@@ -323,6 +332,9 @@ public:
     bool load(const URL&, const ContentType&, const String& keySystem);
 #if ENABLE(MEDIA_SOURCE)
     bool load(const URL&, const ContentType&, MediaSourcePrivateClient*);
+#endif
+#if ENABLE(MEDIA_STREAM)
+    bool load(MediaStreamPrivate*);
 #endif
     void cancelLoad();
 
@@ -391,8 +403,8 @@ public:
     bool autoplay() const;
     void setAutoplay(bool);
 
-    void paint(GraphicsContext*, const IntRect&);
-    void paintCurrentFrameInContext(GraphicsContext*, const IntRect&);
+    void paint(GraphicsContext*, const FloatRect&);
+    void paintCurrentFrameInContext(GraphicsContext*, const FloatRect&);
 
     // copyVideoTextureToPlatformTexture() is used to do the GPU-GPU textures copy without a readback to system memory.
     // The first five parameters denote the corresponding GraphicsContext, destination texture, requested level, requested type and the required internalFormat for destination texture.
@@ -603,6 +615,9 @@ private:
 
 #if ENABLE(MEDIA_SOURCE)
     RefPtr<MediaSourcePrivateClient> m_mediaSource;
+#endif
+#if ENABLE(MEDIA_STREAM)
+    RefPtr<MediaStreamPrivate> m_mediaStream;
 #endif
 };
 

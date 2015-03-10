@@ -733,7 +733,7 @@
    values get stored to atomically. This is trivially true on 64-bit platforms,
    but not true at all on 32-bit platforms where values are composed of two
    separate sub-values. */
-#if (OS(DARWIN) || PLATFORM(EFL)) && !PLATFORM(GTK) && ENABLE(DFG_JIT) && USE(JSVALUE64)
+#if (OS(DARWIN) || PLATFORM(EFL) || PLATFORM(GTK)) && ENABLE(DFG_JIT) && USE(JSVALUE64)
 #define ENABLE_CONCURRENT_JIT 1
 #endif
 
@@ -981,6 +981,14 @@
 
 #if PLATFORM(COCOA)
 #define WTF_USE_AVFOUNDATION 1
+#endif
+
+#if !defined(ENABLE_TREE_DEBUGGING)
+#if !defined(NDEBUG)
+#define ENABLE_TREE_DEBUGGING 1
+#else
+#define ENABLE_TREE_DEBUGGING 0
+#endif
 #endif
 
 #if (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 60000) || PLATFORM(MAC)

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Apple Inc. All rights reserved.
+ *  Copyright (C) 2003-2009, 2015 Apple Inc. All rights reserved.
  *  Copyright (C) 2007 Eric Seidel <eric@webkit.org>
  *  Copyright (C) 2009 Acision BV. All rights reserved.
  *
@@ -88,6 +88,65 @@ static void pthreadSignalHandlerSuspendResume(int)
 #endif
 #endif
 
+class ActiveMachineThreadsManager;
+static ActiveMachineThreadsManager& activeMachineThreadsManager();
+
+class ActiveMachineThreadsManager {
+    WTF_MAKE_NONCOPYABLE(ActiveMachineThreadsManager);
+public:
+
+    class Locker {
+    public:
+        Locker(ActiveMachineThreadsManager& manager)
+            : m_locker(manager.m_lock)
+        {
+        }
+
+    private:
+        MutexLocker m_locker;
+    };
+
+    void add(MachineThreads* machineThreads)
+    {
+        MutexLocker managerLock(m_lock);
+        m_set.add(machineThreads);
+    }
+
+    void remove(MachineThreads* machineThreads)
+    {
+        MutexLocker managerLock(m_lock);
+        auto recordedMachineThreads = m_set.take(machineThreads);
+        RELEASE_ASSERT(recordedMachineThreads = machineThreads);
+    }
+
+    bool contains(MachineThreads* machineThreads)
+    {
+        return m_set.contains(machineThreads);
+    }
+
+private:
+    typedef HashSet<MachineThreads*> MachineThreadsSet;
+
+    ActiveMachineThreadsManager() { }
+    
+    Mutex m_lock;
+    MachineThreadsSet m_set;
+
+    friend ActiveMachineThreadsManager& activeMachineThreadsManager();
+};
+
+static ActiveMachineThreadsManager& activeMachineThreadsManager()
+{
+    static std::once_flag initializeManagerOnceFlag;
+    static ActiveMachineThreadsManager* manager = nullptr;
+
+    std::call_once(initializeManagerOnceFlag, [] {
+        manager = new ActiveMachineThreadsManager();
+    });
+    return *manager;
+}
+    
+
 class MachineThreads::Thread {
     WTF_MAKE_FAST_ALLOCATED;
 public:
@@ -115,16 +174,29 @@ public:
     void* stackBase;
 };
 
-MachineThreads::MachineThreads()
+MachineThreads::MachineThreads(Heap* heap)
     : m_registeredThreads(0)
     , m_threadSpecific(0)
+#if !ASSERT_DISABLED
+    , m_heap(heap)
+#endif
 {
+    UNUSED_PARAM(heap);
     threadSpecificKeyCreate(&m_threadSpecific, removeThread);
+    activeMachineThreadsManager().add(this);
 }
 
-NO_RETURN_DUE_TO_CRASH MachineThreads::~MachineThreads()
+MachineThreads::~MachineThreads()
 {
-    RELEASE_ASSERT_NOT_REACHED();
+    activeMachineThreadsManager().remove(this);
+    threadSpecificKeyDelete(m_threadSpecific);
+
+    MutexLocker registeredThreadsLock(m_registeredThreadsMutex);
+    for (Thread* t = m_registeredThreads; t;) {
+        Thread* next = t->next;
+        delete t;
+        t = next;
+    }
 }
 
 static inline PlatformThread getCurrentPlatformThread()
@@ -149,9 +221,9 @@ static inline bool equalThread(const PlatformThread& first, const PlatformThread
 #endif
 }
 
-void MachineThreads::addCurrentThread(VM* vm)
+void MachineThreads::addCurrentThread()
 {
-    ASSERT_UNUSED(vm, !vm->hasExclusiveThread() || vm->exclusiveThread() == std::this_thread::get_id());
+    ASSERT(!m_heap->vm()->hasExclusiveThread() || m_heap->vm()->exclusiveThread() == std::this_thread::get_id());
 
     if (threadSpecificGet(m_threadSpecific)) {
         ASSERT(threadSpecificGet(m_threadSpecific) == this);
@@ -169,15 +241,24 @@ void MachineThreads::addCurrentThread(VM* vm)
 
 void MachineThreads::removeThread(void* p)
 {
-    static_cast<MachineThreads*>(p)->removeCurrentThread();
+    auto& manager = activeMachineThreadsManager();
+    ActiveMachineThreadsManager::Locker lock(manager);
+    auto machineThreads = static_cast<MachineThreads*>(p);
+    if (manager.contains(machineThreads)) {
+        // There's a chance that the MachineThreads registry that this thread
+        // was registered with was already destructed, and another one happened
+        // to be instantiated at the same address. Hence, this thread may or
+        // may not be found in this MachineThreads registry. We only need to
+        // do a removal if this thread is found in it.
+        machineThreads->removeThreadIfFound(getCurrentPlatformThread());
+    }
 }
 
-void MachineThreads::removeCurrentThread()
+template<typename PlatformThread>
+void MachineThreads::removeThreadIfFound(PlatformThread platformThread)
 {
-    PlatformThread currentPlatformThread = getCurrentPlatformThread();
-
     MutexLocker lock(m_registeredThreadsMutex);
-    if (equalThread(currentPlatformThread, m_registeredThreads->platformThread)) {
+    if (equalThread(platformThread, m_registeredThreads->platformThread)) {
         Thread* t = m_registeredThreads;
         m_registeredThreads = m_registeredThreads->next;
         delete t;
@@ -185,26 +266,23 @@ void MachineThreads::removeCurrentThread()
         Thread* last = m_registeredThreads;
         Thread* t;
         for (t = m_registeredThreads->next; t; t = t->next) {
-            if (equalThread(t->platformThread, currentPlatformThread)) {
+            if (equalThread(t->platformThread, platformThread)) {
                 last->next = t->next;
                 break;
             }
             last = t;
         }
-        ASSERT(t); // If t is NULL, we never found ourselves in the list.
         delete t;
     }
 }
     
-void MachineThreads::gatherFromCurrentThread(ConservativeRoots& conservativeRoots, JITStubRoutineSet& jitStubRoutines, CodeBlockSet& codeBlocks, void* stackCurrent, RegisterState& registers)
+void MachineThreads::gatherFromCurrentThread(ConservativeRoots& conservativeRoots, JITStubRoutineSet& jitStubRoutines, CodeBlockSet& codeBlocks, void* stackOrigin, void* stackTop, RegisterState& calleeSavedRegisters)
 {
-    void* registersBegin = &registers;
-    void* registersEnd = reinterpret_cast<void*>(roundUpToMultipleOf<sizeof(void*)>(reinterpret_cast<uintptr_t>(&registers + 1)));
+    void* registersBegin = &calleeSavedRegisters;
+    void* registersEnd = reinterpret_cast<void*>(roundUpToMultipleOf<sizeof(void*)>(reinterpret_cast<uintptr_t>(&calleeSavedRegisters + 1)));
     conservativeRoots.add(registersBegin, registersEnd, jitStubRoutines, codeBlocks);
 
-    void* stackBegin = stackCurrent;
-    void* stackEnd = wtfThreadData().stack().origin();
-    conservativeRoots.add(stackBegin, stackEnd, jitStubRoutines, codeBlocks);
+    conservativeRoots.add(stackTop, stackOrigin, jitStubRoutines, codeBlocks);
 }
 
 static inline bool suspendThread(const PlatformThread& platformThread)
@@ -410,6 +488,26 @@ static std::pair<void*, size_t> otherThreadStack(void* stackBase, const Platform
     return std::make_pair(begin, static_cast<char*>(end) - static_cast<char*>(begin));
 }
 
+#if ASAN_ENABLED
+void asanUnsafeMemcpy(void* dst, const void* src, size_t);
+void asanUnsafeMemcpy(void* dst, const void* src, size_t size)
+{
+    size_t dstAsSize = reinterpret_cast<size_t>(dst);
+    size_t srcAsSize = reinterpret_cast<size_t>(src);
+    RELEASE_ASSERT(dstAsSize == WTF::roundUpToMultipleOf<sizeof(intptr_t)>(dstAsSize));
+    RELEASE_ASSERT(srcAsSize == WTF::roundUpToMultipleOf<sizeof(intptr_t)>(srcAsSize));
+    RELEASE_ASSERT(size == WTF::roundUpToMultipleOf<sizeof(intptr_t)>(size));
+
+    intptr_t* dstPtr = reinterpret_cast<intptr_t*>(dst);
+    const intptr_t* srcPtr = reinterpret_cast<const intptr_t*>(src);
+    size /= sizeof(intptr_t);
+    while (size--)
+        *dstPtr++ = *srcPtr++;
+}
+    
+#define memcpy asanUnsafeMemcpy
+#endif
+
 // This function must not call malloc(), free(), or any other function that might
 // acquire a lock. Since 'thread' is suspended, trying to acquire a lock
 // will deadlock if 'thread' holds that lock.
@@ -514,9 +612,9 @@ static void growBuffer(size_t size, void** buffer, size_t* capacity)
     *buffer = fastMalloc(*capacity);
 }
 
-void MachineThreads::gatherConservativeRoots(ConservativeRoots& conservativeRoots, JITStubRoutineSet& jitStubRoutines, CodeBlockSet& codeBlocks, void* stackCurrent, RegisterState& currentThreadRegisters)
+void MachineThreads::gatherConservativeRoots(ConservativeRoots& conservativeRoots, JITStubRoutineSet& jitStubRoutines, CodeBlockSet& codeBlocks, void* stackOrigin, void* stackTop, RegisterState& calleeSavedRegisters)
 {
-    gatherFromCurrentThread(conservativeRoots, jitStubRoutines, codeBlocks, stackCurrent, currentThreadRegisters);
+    gatherFromCurrentThread(conservativeRoots, jitStubRoutines, codeBlocks, stackOrigin, stackTop, calleeSavedRegisters);
 
     size_t size;
     size_t capacity = 0;

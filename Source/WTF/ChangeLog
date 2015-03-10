@@ -1,3 +1,323 @@
+2015-03-09  Commit Queue  <commit-queue@webkit.org>
+
+        Unreviewed, rolling out r181307.
+        https://bugs.webkit.org/show_bug.cgi?id=142525
+
+        Broke ASan tests (Requested by ap on #webkit).
+
+        Reverted changeset:
+
+        "bmalloc: tryFastMalloc shouldn't crash"
+        https://bugs.webkit.org/show_bug.cgi?id=142443
+        http://trac.webkit.org/changeset/181307
+
+2015-03-09  Geoffrey Garen  <ggaren@apple.com>
+
+        bmalloc: tryFastMalloc shouldn't crash
+        https://bugs.webkit.org/show_bug.cgi?id=142443
+
+        Reviewed by Darin Adler.
+
+        * wtf/FastMalloc.cpp:
+        (WTF::fastMalloc):
+        (WTF::fastRealloc):
+        (WTF::fastAlignedMalloc): Don't check for null. bmalloc automatically
+        crashes on allocation failure, and we'd rather not pay for an extra check.
+
+        (WTF::tryFastMalloc): Added an opt-out API to return null rather than
+        crashing, since some clients need this.
+
+        (WTF::tryFastRealloc): Deleted. Unused.
+
+        * wtf/FastMalloc.h:
+
+2015-03-09  Mark Lam  <mark.lam@apple.com>
+
+        8-bit version of weakCompareAndSwap() can cause an infinite loop.
+        https://webkit.org/b/142513>
+
+        Reviewed by Filip Pizlo.
+
+        Presently, Bitmap::concurrentTestAndSet() uses the 8-bit version of
+        weakCompareAndSwap() (which compares and swaps an uint8_t value).
+        Bitmap::concurrentTestAndSet() has a loop that checks if a bit in the
+        byte of interest has been set.  If not, it will call the 8-bit CAS
+        function to set the bit.
+
+        Under the covers, for ARM, the 8-bit CAS function actually works with a
+        32-bit CAS.  The 8-bit CAS will first fetch the 32-bit value in memory
+        that should contain the 8-bit value, and check if it contains the
+        expected byte.  If the value in memory doesn't have the expected byte,
+        it will return early to its caller.  The expectation is that the caller
+        will reload the byte from memory and call the 8-bit CAS again.
+
+        Unfortunately, this code path that returns early does not have a
+        compiler fence.  Without a compiler fence, the C++ compiler can
+        optimize away the reloading of the expected byte value, leaving it
+        unchanged.  As a result, we'll have a infinite loop here that checks a
+        value that will never change, and the loop will not terminate until the
+        value changes.
+
+        The fix is to eliminate the early return check in the 8-bit CAS, and
+        have it always call down to the 32-bit CAS.  The 32-bit CAS has a
+        compiler fence which will prevent this issue.
+
+        * wtf/Atomics.h:
+        (WTF::weakCompareAndSwap):
+
+2015-03-09  Martin Robinson  <mrobinson@igalia.com>
+
+        [EFL] Move DispatchQueue to WTF
+        https://bugs.webkit.org/show_bug.cgi?id=142493
+
+        Reviewed by Csaba Osztrogonác.
+
+        * wtf/PlatformEfl.cmake: Add DispatchQueue to the source list.
+        * wtf/efl/DispatchQueueEfl.cpp: Renamed from Source/WebKit2/Platform/efl/DispatchQueueEfl.cpp.
+        * wtf/efl/DispatchQueueEfl.h: Renamed from Source/WebKit2/Platform/efl/DispatchQueueEfl.h.
+        * wtf/efl/DispatchQueueWorkItemEfl.h: Renamed from Source/WebKit2/Platform/efl/DispatchQueueWorkItemEfl.h.
+
+2015-03-08  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] WTF::WorkQueue does not balance ref/deref properly
+        https://bugs.webkit.org/show_bug.cgi?id=142471
+
+        Reviewed by Antti Koivisto.
+
+        Make sure we deref the count when we execute a function in the
+        WorkQueue.
+
+        * wtf/win/WorkQueueWin.cpp:
+        (WTF::WorkQueue::performWorkOnRegisteredWorkThread):
+
+2015-03-07  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] Revive WTF::WorkQueue on Windows
+        https://bugs.webkit.org/show_bug.cgi?id=142432
+
+        Reviewed by Darin Adler.
+
+        Revive the Windows implementation of WTF::WorkQueue.
+
+        * WTF.vcxproj/WTF.vcxproj:
+        * WTF.vcxproj/WTF.vcxproj.filters:
+        * wtf/WorkQueue.h:
+        * wtf/win/WorkItemWin.cpp: Added.
+        * wtf/win/WorkItemWin.h: Added.
+        * wtf/win/WorkQueueWin.cpp: Added.
+
+2015-03-06  Geoffrey Garen  <ggaren@apple.com>
+
+        Fix crashes seen on the the Windows buildbots after my last patch.
+
+        Unreviewed.
+
+        * wtf/FastMalloc.cpp:
+        (WTF::fastAlignedMalloc): Let's pass these arguments in the right order.
+
+2015-03-06  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        Crash in -[WebCascadeList objectAtIndex:] + 195
+        https://bugs.webkit.org/show_bug.cgi?id=141274
+
+        Reviewed by David Kilzer.
+
+        * wtf/WeakPtr.h:
+        (WTF::WeakPtrFactory::createWeakPtr): WebCascadeList uses a const FontCascade,
+        and it calls createWeakPtr() on it. Therefore, createWeakPtr has to be marked
+        const.
+        (WTF::WeakPtrFactory::operator=): Removed because it was broken and had no
+        callers
+
+2015-03-06  Simon Fraser  <simon.fraser@apple.com>
+
+        Allow tree dumping functions to be used in release builds by switching a flag
+        https://bugs.webkit.org/show_bug.cgi?id=142379
+
+        Reviewed by Zalan Bujtas.
+
+        There are various tree dumping functions that are useful for debugging, and sometimes
+        you want to be able to use them in release builds. Currently they are surrounded by
+        #ifndef NDEBUG. Change this to #if ENABLE(TREE_DEBUGGING), which is defined to 0 or 1
+        in wtf/Platform.h
+
+        * wtf/Platform.h:
+
+2015-03-05  Chris Dumez  <cdumez@apple.com>
+
+        Regression(r173761): ASSERTION FAILED: !is8Bit() in StringImpl::characters16()
+        https://bugs.webkit.org/show_bug.cgi?id=142350
+
+        Reviewed by Michael Saboff and Benjamin Poulain.
+
+        Fix ASSERTION FAILED: !is8Bit() in StringImpl::characters16() from
+        WTF::equalInner() after r173761. The code was incorrectly assuming that
+        if stringImpl is 16-bit, then matchString is 16-bit too, which is not
+        correct.
+
+        Also rename WTFString::startsWith() / endsWith() taking an offset to
+        hasInfixStartingAt() / hasInfixEndingAt() for clarity. It seems odd
+        to call it startsWith even though it won't technically *start* with
+        the pattern if the input offset is greater than zero.
+
+        Also drop the caseSensitive argument as it is never used (always true
+        at call sites.
+
+        * wtf/text/StringImpl.cpp:
+        (WTF::equalInner):
+        (WTF::StringImpl::hasInfixStartingAt):
+        (WTF::StringImpl::hasInfixEndingAt):
+        (WTF::StringImpl::startsWith): Deleted.
+        (WTF::StringImpl::endsWith): Deleted.
+        * wtf/text/StringImpl.h:
+        * wtf/text/WTFString.h:
+        (WTF::String::hasInfixStartingAt):
+        (WTF::String::hasInfixEndingAt):
+        (WTF::String::startsWith): Deleted.
+        (WTF::String::endsWith): Deleted.
+
+2015-03-05  Chris Dumez  <cdumez@apple.com>
+
+        NetworkCache efficacy logging is using too much CPU
+        https://bugs.webkit.org/show_bug.cgi?id=142186
+        <rdar://problem/19632080>
+
+        Reviewed by Antti Koivisto.
+
+        * wtf/HashMap.h:
+        (WTF::copyToVector):
+        Add copyToVector() utility function for HashMap that uses an std::pair<key, value>
+        as element type.
+
+        * wtf/text/WTFString.h:
+        (WTF::StringCapture::StringCapture):
+        (WTF::StringCapture::operator=):
+        Add default constructor and assignment operator to StringCapture so that
+        it can be used in a Vector.
+
+2015-03-05  Antti Koivisto  <antti@apple.com>
+
+        Support WorkQueue QOS classes on Mavericks
+        https://bugs.webkit.org/show_bug.cgi?id=142328
+
+        Reviewed by Anders Carlsson.
+
+        "The priority of a dispatch queue is inherited from its target queue.  In order to
+        change the priority of a queue created with dispatch_queue_create(), use the
+        dispatch_get_global_queue() function to obtain a target queue of the desired prior-
+        ity."
+
+        * wtf/cocoa/WorkQueueCocoa.cpp:
+        (WTF::targetQueueForQOSClass):
+        (WTF::WorkQueue::platformInitialize):
+
+2015-03-03  Anders Carlsson  <andersca@apple.com>
+
+        Remove unused compression code
+        https://bugs.webkit.org/show_bug.cgi?id=142237
+
+        Reviewed by Geoffrey Garen.
+
+        * WTF.vcxproj/WTF.vcxproj:
+        * WTF.vcxproj/WTF.vcxproj.filters:
+        * WTF.xcodeproj/project.pbxproj:
+        * wtf/CMakeLists.txt:
+        * wtf/Compression.cpp: Removed.
+        * wtf/Compression.h: Removed.
+
+2015-03-02  Gyuyoung Kim  <gyuyoung.kim@samsung.com>
+
+        [WK2] Remove unnecessary create() factory functions.
+        https://bugs.webkit.org/show_bug.cgi?id=142161
+
+        Reviewed by Chris Dumez.
+
+        We can replace some create() factory functions with std::make_unique(). Because
+        it just returns new instance. Even some of those functions have used std::unique_ptr<>
+        instead of std::make_unique<>. Fixed all.
+
+        * wtf/efl/WorkQueueEfl.cpp:
+        (WorkQueue::dispatch):
+
+2015-03-02  Filip Pizlo  <fpizlo@apple.com>
+
+        DFG compile time measurements should really report milliseconds
+        https://bugs.webkit.org/show_bug.cgi?id=142209
+
+        Reviewed by Benjamin Poulain.
+        
+        This bug was introduced because currentTimeMS() calls were converted to
+        monotonicallyIncreasingTime() calls. Perhaps this bug would be less likely if there was a
+        monotonicallyIncreasingTimeMS() function available, so this patch adds it.
+
+        * wtf/CurrentTime.h:
+        (WTF::monotonicallyIncreasingTimeMS):
+
+2015-02-27  Darin Adler  <darin@apple.com>
+
+        Remove unused PossiblyNull
+        https://bugs.webkit.org/show_bug.cgi?id=142124
+
+        Reviewed by Andreas Kling.
+
+        * WTF.vcxproj/WTF.vcxproj: Removed the file.
+        * WTF.vcxproj/WTF.vcxproj.filters: Ditto.
+        * WTF.xcodeproj/project.pbxproj: Ditto.
+        * wtf/CMakeLists.txt: Ditto.
+        * wtf/PossiblyNull.h: Removed.
+
+        * wtf/FastMalloc.h: Moved everything to the left.
+        Moved member functions out of the TryMallocReturnValue class definition.
+        (WTF::TryMallocReturnValue::operator PossiblyNull<T>): Deleted.
+        (WTF::TryMallocReturnValue::getValue): Marked inline, changed to work
+        only with pointer types, not arbitrary non-pointer types.
+
+2015-02-26  Brent Fulgham  <bfulgham@apple.com>
+
+        [Win] Make build logs more legible by reducing noise
+        https://bugs.webkit.org/show_bug.cgi?id=142034
+
+        Reviewed by Alexey Proskuryakov.
+
+        Modify batch files, makefiles, and DOS commands to remove
+        uninteresting/unhelpful output.
+
+        * WTF.vcxproj/WTFGenerated.make:
+        * WTF.vcxproj/WTFPreBuild.cmd:
+        * WTF.vcxproj/copy-files.cmd:
+
+2015-02-26  Landry Breuil  <landry@openbsd.org>
+
+        Revert bug 19975, now that gcc 4.7 is required.
+        https://bugs.webkit.org/show_bug.cgi?id=129927
+
+        Reviewed by Andreas Kling.
+
+        isfinite() and signbit() are provided by gcc's cmath header.
+
+        * wtf/MathExtras.h:
+
+2015-02-26  Csaba Osztrogonác  <ossy@webkit.org>
+
+        UNREACHABLE_FOR_PLATFORM() should be release assert
+        https://bugs.webkit.org/show_bug.cgi?id=141904
+
+        Reviewed by Darin Adler.
+
+        * wtf/Assertions.h:
+        (UNREACHABLE_FOR_PLATFORM):
+
+2015-02-25  Filip Pizlo  <fpizlo@apple.com>
+
+        Enable concurrent JIT on GTK
+        https://bugs.webkit.org/show_bug.cgi?id=142007
+
+        Reviewed by Benjamin Poulain.
+
+        Seems weird that GTK keeps it off. No good reason for that as far as I can tell.
+
+        * wtf/Platform.h:
+
 2015-02-23  Brent Fulgham  <bfulgham@apple.com>
 
         WTF::WeakPtr should rename 'forgot' to 'clear' and support nullptr assignment

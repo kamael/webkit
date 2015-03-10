@@ -124,7 +124,7 @@ EXTERN_C NSString * const kCAFilterColorHueRotate;
 EXTERN_C NSString * const kCAFilterColorSaturate;
 EXTERN_C NSString * const kCAFilterGaussianBlur;
 EXTERN_C NSString * const kCAFilterPlusD;
-
+EXTERN_C NSString * const kCAFilterPlusL;
 
 EXTERN_C NSString * const kCAFilterNormalBlendMode;
 EXTERN_C NSString * const kCAFilterMultiplyBlendMode;
@@ -142,9 +142,3 @@ EXTERN_C NSString * const kCAFilterExclusionBlendMode;
 EXTERN_C NSString * const kCAContextDisplayName;
 EXTERN_C NSString * const kCAContextDisplayId;
 EXTERN_C NSString * const kCAContextIgnoresHitTest;
-
-// FIXME: These should move into the !USE(APPLE_INTERNAL_SDK) block once they are more readily available.
-typedef struct _CAMachPort *CAMachPortRef;
-extern "C" {
-CAMachPortRef CAMachPortCreate(mach_port_t);
-};

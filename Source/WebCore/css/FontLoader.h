@@ -57,12 +57,6 @@ public:
     }
     virtual ~FontLoader();
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loading);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadingdone);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadstart);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(load);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
-
     bool checkFont(const String&, const String&);
     void loadFont(const Dictionary&);
     void loadFontDone(const LoadFontCallback&);
@@ -85,8 +79,6 @@ public:
     void loadError(CSSFontFaceRule*, CSSFontFaceSource*);
     void loadingDone();
 
-    virtual bool canSuspend() const override { return !m_numLoadingFromCSS && !m_numLoadingFromJS; }
-
 private:
     FontLoader(Document*);
 
@@ -95,7 +87,9 @@ private:
     virtual EventTargetData* eventTargetData() override;
     virtual EventTargetData& ensureEventTargetData() override;
 
-    virtual const char* activeDOMObjectName() const override { return "FontLoader"; }
+    // ActiveDOMObject API.
+    const char* activeDOMObjectName() const override;
+    bool canSuspend() const override;
 
     void pendingEventsTimerFired() { firePendingEvents(); }
     void scheduleEvent(PassRefPtr<Event>);

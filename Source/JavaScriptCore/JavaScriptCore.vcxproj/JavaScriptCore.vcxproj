@@ -451,7 +451,7 @@
     <ClCompile Include="..\dfg\DFGPredictionPropagationPhase.cpp" />
     <ClCompile Include="..\dfg\DFGPromotedHeapLocation.cpp" />
     <ClCompile Include="..\dfg\DFGPureValue.cpp" />
-    <ClCompile Include="..\dfg\DFGPutLocalSinkingPhase.cpp" />
+    <ClCompile Include="..\dfg\DFGPutStackSinkingPhase.cpp" />
     <ClCompile Include="..\dfg\DFGResurrectionForValidationPhase.cpp" />
     <ClCompile Include="..\dfg\DFGSafepoint.cpp" />
     <ClCompile Include="..\dfg\DFGSpeculativeJIT.cpp" />
@@ -531,7 +531,6 @@
     <ClCompile Include="..\ftl\FTLUnwindInfo.cpp" />
     <ClCompile Include="..\ftl\FTLValueFormat.cpp" />
     <ClCompile Include="..\ftl\FTLValueRange.cpp" />
-    <ClCompile Include="..\heap\BlockAllocator.cpp" />
     <ClCompile Include="..\heap\CodeBlockSet.cpp" />
     <ClCompile Include="..\heap\ConservativeRoots.cpp" />
     <ClCompile Include="..\heap\CopiedSpace.cpp" />
@@ -557,7 +556,6 @@
     <ClCompile Include="..\heap\MarkedSpace.cpp" />
     <ClCompile Include="..\heap\MarkStack.cpp" />
     <ClCompile Include="..\heap\SlotVisitor.cpp" />
-    <ClCompile Include="..\heap\SuperRegion.cpp" />
     <ClCompile Include="..\heap\Weak.cpp" />
     <ClCompile Include="..\heap\WeakBlock.cpp" />
     <ClCompile Include="..\heap\WeakHandleOwner.cpp" />
@@ -718,6 +716,7 @@
     <ClCompile Include="..\runtime\InitializeThreading.cpp" />
     <ClCompile Include="..\runtime\IntendedStructureChain.cpp" />
     <ClCompile Include="..\runtime\InternalFunction.cpp" />
+    <ClCompile Include="..\runtime\IteratorOperations.cpp" />
     <ClCompile Include="..\runtime\JSAPIValueWrapper.cpp" />
     <ClCompile Include="..\runtime\JSLexicalEnvironment.cpp" />
     <ClCompile Include="..\runtime\JSArgumentsIterator.cpp" />
@@ -760,6 +759,7 @@
     <ClCompile Include="..\runtime\JSSet.cpp" />
     <ClCompile Include="..\runtime\JSSetIterator.cpp" />
     <ClCompile Include="..\runtime\JSString.cpp" />
+    <ClCompile Include="..\runtime\JSStringIterator.cpp" />
     <ClCompile Include="..\runtime\JSStringJoiner.cpp" />
     <ClCompile Include="..\runtime\JSSymbolTableObject.cpp" />
     <ClCompile Include="..\runtime\JSTypedArrayConstructors.cpp" />
@@ -813,6 +813,8 @@
     <ClCompile Include="..\runtime\StrictEvalActivation.cpp" />
     <ClCompile Include="..\runtime\StringConstructor.cpp" />
     <ClCompile Include="..\runtime\StringObject.cpp" />
+    <ClCompile Include="..\runtime\StringIteratorConstructor.cpp" />
+    <ClCompile Include="..\runtime\StringIteratorPrototype.cpp" />
     <ClCompile Include="..\runtime\StringPrototype.cpp" />
     <ClCompile Include="..\runtime\StringRecursionChecker.cpp" />
     <ClCompile Include="..\runtime\Structure.cpp" />
@@ -854,6 +856,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\ArrayConstructor.lut.h" />
+    <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\ArrayIteratorPrototype.lut.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\ArrayPrototype.lut.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\BooleanPrototype.lut.h" />
     <ClInclude Include="$(ConfigurationBuildDir)\obj$(PlatformArchitecture)\$(ProjectName)\DerivedSources\DateConstructor.lut.h" />
@@ -1123,7 +1126,7 @@
     <ClInclude Include="..\dfg\DFGPromoteHeapAccess.h" />
     <ClInclude Include="..\dfg\DFGPromotedHeapLocation.h" />
     <ClInclude Include="..\dfg\DFGPureValue.h" />
-    <ClInclude Include="..\dfg\DFGPutLocalSinkingPhase.h" />
+    <ClInclude Include="..\dfg\DFGPutStackSinkingPhase.h" />
     <ClInclude Include="..\dfg\DFGRegisterBank.h" />
     <ClInclude Include="..\dfg\DFGRegisterSet.h" />
     <ClInclude Include="..\dfg\DFGResurrectionForValidationPhase.h" />
@@ -1225,7 +1228,6 @@
     <ClInclude Include="..\ftl\FTLValueRange.h" />
     <ClInclude Include="..\ftl\FTLWeight.h" />
     <ClInclude Include="..\ftl\FTLWeightedTarget.h" />
-    <ClInclude Include="..\heap\BlockAllocator.h" />
     <ClInclude Include="..\heap\CodeBlockSet.h" />
     <ClInclude Include="..\heap\ConservativeRoots.h" />
     <ClInclude Include="..\heap\CopiedAllocator.h" />
@@ -1274,12 +1276,10 @@
     <ClInclude Include="..\heap\MarkedSpace.h" />
     <ClInclude Include="..\heap\MarkStack.h" />
     <ClInclude Include="..\heap\RecursiveAllocationScope.h" />
-    <ClInclude Include="..\heap\Region.h" />
     <ClInclude Include="..\heap\SlotVisitor.h" />
     <ClInclude Include="..\heap\SlotVisitorInlines.h" />
     <ClInclude Include="..\heap\Strong.h" />
     <ClInclude Include="..\heap\StrongInlines.h" />
-    <ClInclude Include="..\heap\SuperRegion.h" />
     <ClInclude Include="..\heap\TinyBloomFilter.h" />
     <ClInclude Include="..\heap\UnconditionalFinalizer.h" />
     <ClInclude Include="..\heap\Weak.h" />
@@ -1492,6 +1492,7 @@
     <ClInclude Include="..\runtime\IntendedStructureChain.h" />
     <ClInclude Include="..\runtime\InternalFunction.h" />
     <ClInclude Include="..\runtime\Intrinsic.h" />
+    <ClInclude Include="..\runtime\IteratorOperations.h" />
     <ClInclude Include="..\runtime\JSAPIValueWrapper.h" />
     <ClInclude Include="..\runtime\JSLexicalEnvironment.h" />
     <ClInclude Include="..\runtime\JSArgumentsIterator.h" />
@@ -1551,6 +1552,7 @@
     <ClInclude Include="..\runtime\JSSetIterator.h" />
     <ClInclude Include="..\runtime\JSString.h" />
     <ClInclude Include="..\runtime\JSStringBuilder.h" />
+    <ClInclude Include="..\runtime\JSStringIterator.h" />
     <ClInclude Include="..\runtime\JSStringJoiner.h" />
     <ClInclude Include="..\runtime\JSSymbolTableObject.h" />
     <ClInclude Include="..\runtime\JSType.h" />
@@ -1623,6 +1625,8 @@
     <ClInclude Include="..\runtime\StackAlignment.h" />
     <ClInclude Include="..\runtime\StrictEvalActivation.h" />
     <ClInclude Include="..\runtime\StringConstructor.h" />
+    <ClInclude Include="..\runtime\StringIteratorConstructor.h" />
+    <ClInclude Include="..\runtime\StringIteratorPrototype.h" />
     <ClInclude Include="..\runtime\StringObject.h" />
     <ClInclude Include="..\runtime\StringPrototype.h" />
     <ClInclude Include="..\runtime\StringRecursionChecker.h" />

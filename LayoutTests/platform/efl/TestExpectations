@@ -59,6 +59,9 @@ media/media-captions.html
 fast/dom/Window/slow-unload-handler.html
 fast/dom/Window/slow-unload-handler-only-frame-is-stopped.html
 
+# Need a scroll snap point implementation
+css3/scroll-snap [ Skip ]
+
 # ----------------------------------------
 # Tests which also fail in other platforms
 # ----------------------------------------
@@ -251,13 +254,8 @@ fast/frames/transparent-scrollbar.html
 fast/events/drag-and-drop-subframe-dataTransfer.html
 fast/events/drag-dataTransferItemList-file-handling.html
 
-# ENABLE(CSS_SCROLL_SNAP) is disabled.
-css3/scroll-snap
-
 # ENABLE(DRAGGABLE_REGION) is disabled
 fast/css/draggable-region-parser.html
-
-webkit.org/b/99096 fast/canvas/webgl/arraybuffer-transfer-of-control.html [ Failure Pass ]
 
 # IndexedDB is on refactoring/refreshing, so the tests are quite unstable at this point.
 webkit.org/b/87661 storage/indexeddb [ Skip ]
@@ -267,7 +265,10 @@ webkit.org/b/87661 http/tests/security/cross-origin-worker-indexeddb-allowed.htm
 webkit.org/b/87661 http/tests/security/cross-origin-worker-indexeddb.html [ Skip ]
 webkit.org/b/87661 http/tests/security/no-indexeddb-from-sandbox.html [ Skip ]
 webkit.org/b/87661 crypto/subtle/rsa-indexeddb.html [ Skip ]
-inspector-protocol/indexeddb/basics.html
+webkit.org/b/87661 inspector-protocol/indexeddb/basics.html [ Skip ]
+webkit.org/b/87661 fast/history/page-cache-indexed-closed-db.html [ Skip ]
+webkit.org/b/87661 fast/history/page-cache-indexed-opened-db.html [ Skip ]
+webkit.org/b/87661 fast/history/page-cache-webdatabase-opened-db.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # TESTS EXPECTED TO FAIL
@@ -349,7 +350,6 @@ webkit.org/b/86623 fast/events/moving-text-should-fire-drop-and-dragend-events.h
 webkit.org/b/86623 fast/events/moving-text-should-fire-drop-and-dragend-events-2.html [ Failure ]
 webkit.org/b/86623 fast/events/ondragenter.html
 webkit.org/b/86623 fast/events/ondrop-text-html.html
-webkit.org/b/86623 fast/events/only-valid-drop-targets-receive-file-drop.html [ Timeout ]
 webkit.org/b/86623 fast/events/remove-target-with-shadow-in-drag.html [ Failure ]
 webkit.org/b/86623 fast/events/standalone-image-drag-to-editable.html
 webkit.org/b/86623 fast/forms/drag-into-textarea.html
@@ -375,7 +375,6 @@ editing/style/5065910.html [ Missing ]
 editing/style/font-family-with-space.html [ Missing ]
 editing/style/smoosh-styles-001.html [ Missing ]
 editing/style/style-boundary-005.html [ Missing ]
-fast/borders/mixed-border-style2.html [ Missing ]
 fast/css/css2-system-fonts.html [ Missing ]
 fast/text/tatechuyoko.html [ Missing ]
 
@@ -462,6 +461,11 @@ webkit.org/b/141894 fast/attachment/attachment-rendering.html [ Failure ]
 # EFL port doesn't fully support EME yet.
 webkit.org/b/141959 http/tests/media/clearkey/clear-key-hls-aes128.html [ Timeout ]
 
+# Need to have baseline since r181114.
+Bug(EFL) fast/attachment/attachment-progress.html [ Missing ]
+Bug(EFL) fast/attachment/attachment-subtitle.html [ Missing ]
+Bug(EFL) fast/attachment/attachment-title.html [ Missing ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # CRASHES
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -474,9 +478,6 @@ webkit.org/b/98747 plugins/document-open.html [ Crash Failure Timeout ]
 
 webkit.org/b/102200 fast/dom/HTMLAnchorElement/anchor-download.html [ Timeout ]
 webkit.org/b/102200 fast/dom/HTMLAnchorElement/anchor-nodownload-set.html [ Timeout ]
-
-# Known WebGL conformance test failures, fails on Intel and AMD hardware
-webkit.org/b/129199 webgl/1.0.2/conformance/uniforms/uniform-default-values.html [ Crash ]
 
 # Sometimes hit !m_finishedNodes.size() assertion in AudioContext destructor.
 webkit.org/b/105870 webaudio/audiobuffersource.html [ Pass Crash ]
@@ -514,24 +515,120 @@ webkit.org/b/124574 fast/css/object-fit/object-fit-embed.html [ Crash Timeout Pa
 webkit.org/b/131044 media [ Skip ]
 
 # A lot of crash happen since buildbot bagan to use Ubuntu 13.10.
-webkit.org/b/131729 compositing/webgl/webgl-no-alpha.html [ Crash ]
-webkit.org/b/131729 compositing/webgl/webgl-background-color.html [ Crash ]
-webkit.org/b/131729 compositing/webgl/webgl-repaint.html [ Crash ]
-webkit.org/b/131729 compositing/webgl/webgl-reflection.html [ Crash ]
-webkit.org/b/131729 compositing/backface-visibility/backface-visibility-webgl.html [ Crash ]
-webkit.org/b/131729 fast/canvas/webgl [ Skip ]
 webkit.org/b/131729 fast/events/touch [ Skip ]
-webkit.org/b/131729 webgl [ Skip ]
+
+# REGRESSION(r174107): [EFL] WebGL broken
+# https://bugs.webkit.org/show_bug.cgi?id=137842
+fast/canvas/webgl [ Skip ]
+webgl [ Skip ]
+http/tests/webgl [ Skip ]
+compositing/webgl [ Skip ]
+compositing/backface-visibility/backface-visibility-webgl.html [ Skip ]
+compositing/visibility/visibility-simple-webgl-layer.html [ Skip ]
+fast/images/webgl-teximage2d.html [ Skip ]
+http/tests/canvas/webgl/origin-clean-conformance.html [ Skip ]
+http/tests/security/webgl-remote-read-remote-image-allowed-with-credentials.html [ Skip ]
+http/tests/security/webgl-remote-read-remote-image-allowed.html [ Skip ]
+http/tests/security/webgl-remote-read-remote-image-blocked-no-crossorigin.html [ Skip ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# Old WebGL expectations before skipping all of them
+#////////////////////////////////////////////////////////////////////////////////////////
+
+# webkit.org/b/99096 fast/canvas/webgl/arraybuffer-transfer-of-control.html [ Failure Pass ]
+
+# Known WebGL conformance test failures, fails on Intel and AMD hardware
+# webkit.org/b/129199 webgl/1.0.2/conformance/uniforms/uniform-default-values.html [ Crash ]
+
+# A lot of crash happen since buildbot bagan to use Ubuntu 13.10.
+# webkit.org/b/131729 compositing/webgl/webgl-no-alpha.html [ Crash ]
+# webkit.org/b/131729 compositing/webgl/webgl-background-color.html [ Crash ]
+# webkit.org/b/131729 compositing/webgl/webgl-repaint.html [ Crash ]
+# webkit.org/b/131729 compositing/webgl/webgl-reflection.html [ Crash ]
+# webkit.org/b/131729 compositing/backface-visibility/backface-visibility-webgl.html [ Crash ]
+# webkit.org/b/131729 http/tests/canvas/webgl/origin-clean-conformance.html [ Crash ]
+# webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-allowed-with-credentials.html [ Crash ]
+# webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-allowed.html [ Crash ]
+# webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-blocked-no-crossorigin.html [ Crash ]
+
+# Tests crashing with common backtrace ending in WebGLRenderingContext::reshape
+# webkit.org/b/135194 webgl/1.0.2/conformance/rendering/multisample-corruption.html [ Crash Timeout ]
+# webkit.org/b/135194 webgl/1.0.2/conformance/textures/texture-size-cube-maps.html [ Crash Timeout ]
+
+# Tests crashing with common backtrace ending in GraphicsContext3D::mappedSymbolName
+# webkit.org/b/127277 webkit.org/b/135196 fast/canvas/webgl/glsl-conformance.html [ Crash Timeout ]
+# webkit.org/b/105029 webkit.org/b/135196 fast/canvas/webgl/webgl-composite-modes.html [ Crash Failure Timeout ]
+# webkit.org/b/105029 webkit.org/b/135196 fast/canvas/webgl/webgl-composite-modes-repaint.html [ Crash Timeout Failure ]
+# webkit.org/b/135196 webgl/1.0.2/conformance/attribs/gl-vertex-attrib-render.html [ Crash Failure Timeout ]
+# webkit.org/b/135196 webgl/1.0.2/conformance/ogles/GL/sin/sin_001_to_006.html [ Crash Timeout ]
+# webkit.org/b/135196 webgl/1.0.2/conformance/uniforms/gl-uniform-arrays.html [ Crash Timeout ]
+# webkit.org/b/124935 webkit.org/b/135196 webgl/1.0.2/conformance/uniforms/out-of-bounds-uniform-array-access.html [ Crash Timeout ]
+
+# Tests crashing with common backtrace ending in WebGLRenderingContext::bindTexture
+# webkit.org/b/105030 webkit.org/b/135197 fast/canvas/webgl/framebuffer-object-attachment.html [ Crash Timeout ]
+# webkit.org/b/105030 webkit.org/b/135197 fast/canvas/webgl/premultiplyalpha-test.html [ Crash Timeout ]
+# webkit.org/b/127279 webkit.org/b/135197 fast/canvas/webgl/webgl-compressed-texture-size-limit.html [ Crash Timeout ]
+# webkit.org/b/129818 webkit.org/b/135197 fast/canvas/webgl/webgl-draw-buffers.html [ Crash Timeout ]
+# webkit.org/b/135197 fast/images/webgl-teximage2d.html [ Crash Timeout ]
+# webkit.org/b/135197 webgl/1.0.2/conformance/context/context-creation-and-destruction.html [ Crash Timeout ]
+# webkit.org/b/135197 webgl/1.0.2/conformance/context/premultiplyalpha-test.html  [ Crash Timeout ]
+# webkit.org/b/135197 webgl/1.0.2/conformance/extensions/oes-texture-float.html [ Crash Timeout ]
+# webkit.org/b/135197 webgl/1.0.2/conformance/textures/copy-tex-image-2d-formats.html [ Crash Timeout ]
+# webkit.org/b/135197 webgl/1.0.2/conformance/textures/texture-attachment-formats.html [ Crash Timeout ]
+
+# webkit.org/b/124935 webgl/1.0.2/conformance/glsl/misc/shader-with-non-reserved-words.html [ Failure Pass ]
+
+# Started to crash after r160991
+# webkit.org/b/127914 fast/canvas/webgl/oes-texture-half-float-with-image.html [ Failure Crash ]
+# webkit.org/b/127914 fast/canvas/webgl/oes-texture-half-float.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas-rgb565.html [ Crash Timeout Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas-rgba5551.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data-rgb565.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data-rgba5551.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-rgb565.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-video.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/texImageTest.html [ Crash Pass ]
+# webkit.org/b/127914 fast/canvas/webgl/texture-color-profile.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/extensions/oes-texture-float-with-image-data.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/extensions/webgl-debug-renderer-info.html [ Crash Failure ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/rendering/gl-drawelements.html [ Crash Failure ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/copy-tex-image-and-sub-image-2d.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/gl-get-tex-parameter.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgb565.html [ Crash Timeout Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgba4444.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgba5551.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data-rgb565.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data-rgba4444.html [ Crash Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data.html [ Crash Timeout Pass ]
+# webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-rgb565.html [ Crash Pass ]
+
+# Known WebGL conformance test failures, fails on Intel and AMD hardware
+# webkit.org/b/129199 webgl/1.0.2/conformance/glsl/misc/shader-uniform-packing-restrictions.html [ Crash Failure Pass ]
+
+# Rendering failure, also missing expected results:
+# webkit.org/b/105093 compositing/webgl/webgl-nonpremultiplied-blend.html [ Skip ]
+
+# Known WebGL conformance test failures, fails on Intel and AMD hardware
+# webgl/1.0.2/conformance/glsl/literals/float_literal.vert.html [ Failure ]
+
+# ANGLE_instanced_arrays not implemented on efl
+# fast/canvas/webgl/angle-instanced-arrays.html [ Skip ]
+
+# webkit.org/b/133306 fast/canvas/webgl/css-webkit-canvas-repaint.html [ Failure ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# End of old WebGL expectations before skipping all of them
+#////////////////////////////////////////////////////////////////////////////////////////
+
 
 # Still failing/flakey tests, needs more investigation
-webkit.org/b/131729 http/tests/webgl [ Skip ]
-webkit.org/b/131729 http/tests/canvas/webgl/origin-clean-conformance.html [ Crash ]
 webkit.org/b/131729 http/tests/globalhistory/history-delegate-basic-302-redirect.html [ Failure ]
 webkit.org/b/131729 http/tests/globalhistory/history-delegate-basic-title.html [ Failure ]
 webkit.org/b/131729 http/tests/globalhistory/history-delegate-pushstate.html [ Failure ]
 webkit.org/b/131729 http/tests/globalhistory/history-delegate-replacestate.html [ Failure ]
 webkit.org/b/131729 http/tests/loading/sizes/preload-image-sizes-2x.html [ Failure ]
-webkit.org/b/131729 http/tests/local/file-url-sent-as-referer.html [ Failure ]
 webkit.org/b/131729 http/tests/misc/acid3.html [ Failure Pass ]
 webkit.org/b/131729 http/tests/misc/image-blocked-src-change.html [ Failure Pass ]
 webkit.org/b/131729 http/tests/misc/slow-loading-image-in-pattern.html [ Failure ]
@@ -541,36 +638,8 @@ webkit.org/b/131729 http/tests/media/video-redirect.html [ Crash ]
 webkit.org/b/131729 http/tests/security/cross-origin-plugin-private-browsing-toggled.html [ Failure ]
 webkit.org/b/131729 http/tests/security/drag-drop-local-file.html [ Failure ]
 webkit.org/b/131729 http/tests/security/svg-image-with-cached-remote-image.html [ Failure ImageOnlyFailure Pass ]
-webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-allowed-with-credentials.html [ Crash ]
-webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-allowed.html [ Crash ]
-webkit.org/b/131729 http/tests/security/webgl-remote-read-remote-image-blocked-no-crossorigin.html [ Crash ]
 webkit.org/b/131729 http/tests/xmlhttprequest/simple-cross-origin-denied-events.html [ Failure Pass ]
 webkit.org/b/131729 http/tests/xmlhttprequest/xmlhttprequest-overridemimetype-invalidstaterror.html [ Failure Pass ]
-
-# Tests crashing with common backtrace ending in WebGLRenderingContext::reshape
-webkit.org/b/135194 webgl/1.0.2/conformance/rendering/multisample-corruption.html [ Crash Timeout ]
-webkit.org/b/135194 webgl/1.0.2/conformance/textures/texture-size-cube-maps.html [ Crash Timeout ]
-
-# Tests crashing with common backtrace ending in GraphicsContext3D::mappedSymbolName
-webkit.org/b/127277 webkit.org/b/135196 fast/canvas/webgl/glsl-conformance.html [ Crash Timeout ]
-webkit.org/b/105029 webkit.org/b/135196 fast/canvas/webgl/webgl-composite-modes.html [ Crash Failure Timeout ]
-webkit.org/b/105029 webkit.org/b/135196 fast/canvas/webgl/webgl-composite-modes-repaint.html [ Crash Timeout Failure ]
-webkit.org/b/135196 webgl/1.0.2/conformance/attribs/gl-vertex-attrib-render.html [ Crash Failure Timeout ]
-webkit.org/b/135196 webgl/1.0.2/conformance/ogles/GL/sin/sin_001_to_006.html [ Crash Timeout ]
-webkit.org/b/135196 webgl/1.0.2/conformance/uniforms/gl-uniform-arrays.html [ Crash Timeout ]
-webkit.org/b/124935 webkit.org/b/135196 webgl/1.0.2/conformance/uniforms/out-of-bounds-uniform-array-access.html [ Crash Timeout ]
-
-# Tests crashing with common backtrace ending in WebGLRenderingContext::bindTexture
-webkit.org/b/105030 webkit.org/b/135197 fast/canvas/webgl/framebuffer-object-attachment.html [ Crash Timeout ]
-webkit.org/b/105030 webkit.org/b/135197 fast/canvas/webgl/premultiplyalpha-test.html [ Crash Timeout ]
-webkit.org/b/127279 webkit.org/b/135197 fast/canvas/webgl/webgl-compressed-texture-size-limit.html [ Crash Timeout ]
-webkit.org/b/129818 webkit.org/b/135197 fast/canvas/webgl/webgl-draw-buffers.html [ Crash Timeout ]
-webkit.org/b/135197 fast/images/webgl-teximage2d.html [ Crash Timeout ]
-webkit.org/b/135197 webgl/1.0.2/conformance/context/context-creation-and-destruction.html [ Crash Timeout ]
-webkit.org/b/135197 webgl/1.0.2/conformance/context/premultiplyalpha-test.html  [ Crash Timeout ]
-webkit.org/b/135197 webgl/1.0.2/conformance/extensions/oes-texture-float.html [ Crash Timeout ]
-webkit.org/b/135197 webgl/1.0.2/conformance/textures/copy-tex-image-2d-formats.html [ Crash Timeout ]
-webkit.org/b/135197 webgl/1.0.2/conformance/textures/texture-attachment-formats.html [ Crash Timeout ]
 
 webkit.org/b/135498 css3/device-adapt/opera/constrain-009.xhtml [ Crash Timeout ]
 webkit.org/b/135498 css3/device-adapt/opera/constrain-023.xhtml [ Crash Timeout ]
@@ -585,6 +654,8 @@ webkit.org/b/136099 fast/harness/show-modal-dialog.html [ Crash Timeout ]
 
 webkit.org/b/136227 mathml/very-large-stretchy-operators.html [ Crash Timeout Pass ]
 
+webkit.org/b/142158 inspector-protocol/dom/remove-multiple-nodes.html [ Crash ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # FLAKY TESTS
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -594,6 +665,7 @@ Bug(EFL) fast/loader/child-frame-add-after-back-forward.html [ Failure Pass ]
 Bug(EFL) fast/events/backspace-navigates-back.html [ Failure Pass ]
 Bug(EFL) http/tests/loading/fire-error-event-empty-404-script.html [ Crash Failure Pass ]
 Bug(EFL) js/dom/create-lots-of-workers.html [ Crash Failure Pass ]
+Bug(EFL) media/track/track-cues-pause-on-exit.html [ Failure Timeout Pass ]
 Bug(EFL) media/track/track-element-load-event.html [ Crash Failure Pass ]
 
 webkit.org/b/85603 fast/forms/textarea-placeholder-set-attribute.html [ Failure ImageOnlyFailure Pass ]
@@ -738,6 +810,8 @@ webkit.org/b/108355 storage/websql/sql-error-codes.html [ Failure ]
 
 # Libsoup 2.42.0 regressions
 webkit.org/b/114918 http/tests/xmlhttprequest/cache-override.html [ Failure Pass ]
+webkit.org/b/114918 http/tests/xmlhttprequest/xmlhttprequest-overridemimetype-invalidstaterror.html [ Failure Timeout Pass ]
+webkit.org/b/114918 http/tests/xmlhttprequest/xmlhttprequest-overridemimetype-mixed-case.html [ Timeout Pass ]
 
 webkit.org/b/115440 svg/stroke/animated-non-scaling-stroke.html [ ImageOnlyFailure Pass ]
 
@@ -767,8 +841,6 @@ webkit.org/b/124933 svg/animations/getCurrentTime-pause-unpause.html [ Failure P
 
 webkit.org/b/124934 svg/animations/svglengthlist-animation-3.html [ Failure Pass ]
 
-webkit.org/b/124935 webgl/1.0.2/conformance/glsl/misc/shader-with-non-reserved-words.html [ Failure Pass ]
-
 # Started to crash after r163871
 webkit.org/b/128905 media/video-fast-seek.html [ Crash Pass Failure ]
 webkit.org/b/128905 media/video-extreme-playbackrate-crash.html [ Crash Pass Failure ]
@@ -785,6 +857,7 @@ webkit.org/b/125517 compositing/regions/z-index-update.html [ Crash Pass ]
 
 webkit.org/b/141897 fast/regions/overflow/overflow-region-float.html [ ImageOnlyFailure ]
 webkit.org/b/141897 fast/regions/overflow/overflow-region-inline.html [ ImageOnlyFailure ]
+webkit.org/b/141897 fast/regions/overflow/overflow-first-and-last-regions.html [ ImageOnlyFailure ]
 
 webkit.org/b/125573 compositing/backgrounds/fixed-backgrounds.html [ Crash Pass ]
 
@@ -796,35 +869,6 @@ webkit.org/b/130353 mathml/wbr-in-mroot-crash.html [ Crash Pass ]
 
 webkit.org/b/127109 media/video-object-fit-change.html [ ImageOnlyFailure Pass ]
 webkit.org/b/127109 media/video-object-fit.html [ ImageOnlyFailure Pass ]
-
-# Started to crash after r160991
-webkit.org/b/127914 fast/canvas/webgl/oes-texture-half-float-with-image.html [ Failure Crash ]
-webkit.org/b/127914 fast/canvas/webgl/oes-texture-half-float.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas-rgb565.html [ Crash Timeout Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas-rgba5551.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-canvas.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data-rgb565.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data-rgba5551.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-rgb565.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/tex-image-and-sub-image-2d-with-video.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/texImageTest.html [ Crash Pass ]
-webkit.org/b/127914 fast/canvas/webgl/texture-color-profile.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/extensions/oes-texture-float-with-image-data.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/extensions/webgl-debug-renderer-info.html [ Crash Failure ]
-webkit.org/b/127914 webgl/1.0.2/conformance/rendering/gl-drawelements.html [ Crash Failure ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/copy-tex-image-and-sub-image-2d.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/gl-get-tex-parameter.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgb565.html [ Crash Timeout Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgba4444.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas-rgba5551.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-canvas.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data-rgb565.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data-rgba4444.html [ Crash Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-data.html [ Crash Timeout Pass ]
-webkit.org/b/127914 webgl/1.0.2/conformance/textures/tex-image-and-sub-image-2d-with-image-rgb565.html [ Crash Pass ]
-
-# Known WebGL conformance test failures, fails on Intel and AMD hardware
-webkit.org/b/129199 webgl/1.0.2/conformance/glsl/misc/shader-uniform-packing-restrictions.html [ Crash Failure Pass ]
 
 webkit.org/b/119789 fast/events/touch/touch-before-pressing-spin-button.html [ Crash Pass ]
 webkit.org/b/119789 fast/events/touch/touch-inside-iframe.html [ Crash Pass ]
@@ -854,6 +898,13 @@ webkit.org/b/137138 svg/W3C-SVG-1.1 [ Failure ImageOnlyFailure Pass ]
 
 # EFL port doesn't support Khmer and Lao fallback fonts, this test has added since r170207.
 Bug(EFL) fast/text/khmer-lao-font.html [ Skip ]
+
+webkit.org/b/142156 css3/shapes/spec-examples/shape-outside-011.html [ Failure Pass ]
+webkit.org/b/142156 css3/shapes/spec-examples/shape-outside-012.html [ Failure Pass ]
+webkit.org/b/142156 css3/shapes/spec-examples/shape-outside-019.html [ Failure Pass ]
+
+webkit.org/b/142157 fast/profiler/dead-time.html [ Failure Pass ]
+webkit.org/b/142157 fast/profiler/stop-profiling-after-setTimeout.html [ Failure Pass ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # PASSING TESTS WITH INCORRECT EXPECTATIONS
@@ -902,49 +953,6 @@ Bug(EFL) fast/events/wheelevent-in-vertical-scrollbar-in-rtl.html [ Failure ]
 Bug(EFL) fast/events/touch/gesture
 Bug(EFL) fast/events/touch/page-scaled-touch-gesture-click.html
 
-# EventSender.beginDragWithFiles is not implemented
-webkit.org/b/84333 fast/dom/Window/window-postmessage-clone-frames.html [ Timeout ]
-webkit.org/b/84333 fast/dom/Window/window-postmessage-clone.html [ Timeout ]
-webkit.org/b/84333 fast/events/drag-file-crash.html [ Failure ]
-webkit.org/b/84333 fast/events/drag-to-navigate.html [ Timeout ]
-webkit.org/b/84333 fast/events/drop-handler-should-not-stop-navigate.html [ Timeout ]
-webkit.org/b/84333 fast/events/drop-with-file-paths.html [ Timeout ]
-webkit.org/b/84333 fast/events/dropzone-004.html [ Failure ]
-webkit.org/b/84333 fast/events/file-input-hidden-in-ondrop.html [ Timeout ]
-webkit.org/b/84333 fast/events/input-element-display-none-in-dragleave-crash.html [ Timeout ]
-webkit.org/b/84333 fast/events/prevent-drag-to-navigate.html [ Timeout ]
-webkit.org/b/84333 fast/files/apply-blob-url-to-img.html [ Timeout ]
-webkit.org/b/84333 fast/files/apply-blob-url-to-xhr.html [ Timeout ]
-webkit.org/b/84333 fast/files/file-list-test.html [ Failure ]
-webkit.org/b/84333 fast/files/file-reader-abort.html [ Timeout ]
-webkit.org/b/84333 fast/files/file-reader-directory-crash.html [ Timeout ]
-webkit.org/b/84333 fast/files/null-origin-string.html [ Timeout ]
-webkit.org/b/84333 fast/files/read-blob-async.html [ Timeout ]
-webkit.org/b/84333 fast/files/read-file-async.html [ Timeout ]
-webkit.org/b/84333 fast/files/workers/worker-apply-blob-url-to-xhr.html [ Timeout ]
-webkit.org/b/84333 fast/files/workers/worker-read-blob-async.html [ Timeout ]
-webkit.org/b/84333 fast/files/workers/worker-read-blob-sync.html [ Timeout ]
-webkit.org/b/84333 fast/files/workers/worker-read-file-async.html [ Timeout ]
-webkit.org/b/84333 fast/files/workers/worker-read-file-sync.html [ Timeout ]
-webkit.org/b/84333 fast/forms/file/file-input-change-event.html [ Failure ]
-webkit.org/b/84333 fast/forms/file/file-input-reset.html [ ImageOnlyFailure ]
-webkit.org/b/84333 fast/forms/file/get-file-upload.html [ Timeout ]
-webkit.org/b/84333 fast/forms/file/input-file-directory-upload.html [ Timeout ]
-webkit.org/b/84333 fast/forms/file/input-file-re-render.html [ Timeout ]
-webkit.org/b/84333 fast/forms/file/input-file-write-files.html [ Failure ]
-webkit.org/b/84333 fast/forms/file/recover-file-input-in-unposted-form.html [ Timeout ]
-webkit.org/b/84333 fast/forms/file/selected-files-from-history-state.html [ Timeout ]
-webkit.org/b/84333 http/tests/local/blob/send-hybrid-blob.html [ Timeout ]
-webkit.org/b/84333 http/tests/local/fileapi/send-sliced-dragged-file.html [ Failure ]
-webkit.org/b/84333 http/tests/local/formdata/form-data-with-unknown-file-extension.html [ Failure ]
-webkit.org/b/84333 http/tests/local/formdata/send-form-data-constructed-from-form.html [ Timeout ]
-webkit.org/b/84333 http/tests/local/formdata/send-form-data.html [ Failure ]
-webkit.org/b/84333 http/tests/local/formdata/send-form-data-with-empty-file-filename.html [ Timeout ]
-webkit.org/b/84333 http/tests/local/formdata/send-form-data-with-filename.html [ Failure ]
-webkit.org/b/84333 http/tests/local/formdata/send-form-data-with-sliced-file.html [ Failure ]
-webkit.org/b/84333 http/tests/local/formdata/upload-events.html [ Timeout ]
-webkit.org/b/84333 http/tests/security/clipboard/clipboard-file-access.html [ Failure ]
-
 # EFL port needs Pasteboard implementation.
 webkit.org/b/84338 editing/deleting/paste-with-transparent-background-color.html [ Failure ]
 webkit.org/b/84338 editing/input/paste-text-ending-with-interchange-newline.html [ Failure ]
@@ -975,8 +983,6 @@ Bug(EFL) svg/zoom/page/zoom-zoom-coords.xhtml
 webkit.org/b/98644 svg/W3C-SVG-1.1/pservers-grad-13-b.svg [ Skip ]
 
 webkit.org/b/98653 svg/text/lengthAdjust-text-metrics.html [ Failure ]
-
-webkit.org/b/99893 svg/animations/mozilla/animateMotion-mpath-targetChange-1.svg [ ImageOnlyFailure ]
 
 webkit.org/b/98718 svg/animations/animate-css-xml-attributeType.html [ Failure Pass ]
 
@@ -1065,6 +1071,10 @@ Bug(EFL) fast/images/webp-color-profile-lossy.html [ Skip ]
 # Requires MEDIA_SOURCE support.
 webkit.org/b/95296 http/tests/media/media-source [ Skip ]
 webkit.org/b/95296 media/media-source [ Skip ]
+webkit.org/b/95296 fast/history/page-cache-media-source-opened.html [ Skip ]
+webkit.org/b/95296 fast/history/page-cache-media-source-closed.html [ Skip ]
+webkit.org/b/95296 fast/history/page-cache-media-source-closed-2.html [ Skip ]
+webkit.org/b/95296 fast/history/page-cache-removed-source-buffer.html [ Skip ]
 
 # Requires ENCRYPTED_MEDIA support.
 webkit.org/b/95297 media/encrypted-media [ Pass ]
@@ -1086,6 +1096,8 @@ webkit.org/b/111446 indieui [ Skip ]
 # Requires support for Web notifications
 webkit.org/b/73544 fast/notifications [ Skip ]
 webkit.org/b/73544 http/tests/notifications [ Skip ]
+webkit.org/b/73544 fast/history/page-cache-notification-non-suspendable.html [ Skip ]
+webkit.org/b/73544 fast/history/page-cache-notification-suspendable.html [ Skip ]
 
 # The test is too slow on Debug bot and randomly fails
 webkit.org/b/61932 [ Debug ] jquery/manipulation.html [ Failure Pass Timeout ]
@@ -1124,10 +1136,6 @@ webkit.org/b/85689 fast/animation/request-animation-frame-disabled.html [ Skip ]
 
 # DRT doesn't check for isPrinting().
 webkit.org/b/87226 printing/iframe-print.html [ Failure ]
-
-webkit.org/b/108507 printing/quirks-percentage-height-body.html [ ImageOnlyFailure ]
-webkit.org/b/108507 printing/quirks-percentage-height.html [ ImageOnlyFailure ]
-webkit.org/b/108507 printing/standards-percentage-heights.html [ ImageOnlyFailure ]
 
 webkit.org/b/79757 fast/selectors/selection-window-inactive.html [ ImageOnlyFailure ]
 
@@ -1291,6 +1299,8 @@ Bug(EFL) fast/layers/layer-visibility-sublayer.html [ Failure ]
 Bug(EFL) fast/layers/layer-visibility.html [ Failure ]
 Bug(EFL) fast/repaint/invisible-objects.html [ Failure ]
 Bug(EFL) fast/repaint/layer-hide-when-needs-layout.html [ Failure ]
+Bug(EFL) fast/text/whitespace/019.html [ Failure ]
+Bug(EFL) fast/text/whitespace/023.html [ Failure ]
 Bug(EFL) fast/text/whitespace/028.html [ Failure ]
 Bug(EFL) fullscreen/full-screen-iframe-legacy.html [ Failure Pass ]
 Bug(EFL) media/track/track-cues-pause-on-exit.html [ Failure Pass ]
@@ -1354,9 +1364,6 @@ Bug(EFL) media/track/in-band [ Skip ]
 # DataCue.value not enabled
 Bug(EFL) http/tests/media/track-in-band-hls-metadata.html [ Skip ]
 Bug(EFL) media/track/track-datacue-value.html [ Skip ]
-
-# Rendering failure, also missing expected results:
-webkit.org/b/105093 compositing/webgl/webgl-nonpremultiplied-blend.html [ Skip ]
 
 # Rendering issues.
 webkit.org/b/133979 svg/wicd/rightsizing-grid.xhtml [ Failure ]
@@ -1473,6 +1480,10 @@ webkit.org/b/115419 media/track/track-automatic-subtitles.html [ Timeout ]
 
 webkit.org/b/115439 fast/text/complex-initial-advance.html [ ImageOnlyFailure ]
 
+webkit.org/b/142450 fast/text/font-kerning.html [ ImageOnlyFailure ]
+webkit.org/b/142450 fast/text/narrow-non-breaking-space.html [ ImageOnlyFailure ]
+webkit.org/b/142450 fast/text/space-width.html [ ImageOnlyFailure ]
+
 # Synthesized italics not supported
 fast/text/international/synthesized-italic-vertical-latin.html [ Skip ]
 
@@ -1482,6 +1493,7 @@ webkit.org/b/118378 vibration/cancelVibration-after-pagevisibility-changed-to-hi
 # Some tests will fail after the visual overflow patch, they will be fixed shortly.
 webkit.org/b/118665 fast/regions/hover-in-second-region.html [ ImageOnlyFailure Pass ]
 webkit.org/b/118665 fast/regions/webkit-flow-float-unable-to-push.html [ ImageOnlyFailure Pass ]
+webkit.org/b/118665 fast/regions/region-overflow-break.html [ ImageOnlyFailure ]
 
 webkit.org/b/119782 fast/forms/search-styled.html [ Failure ]
 
@@ -1503,9 +1515,12 @@ webkit.org/b/122963 fast/regions/repaint/region-painting-via-layout.html [ Missi
 
 # EFL port doesn't fully support printing
 webkit.org/b/123561 printing/media-queries-print.html [ Missing ]
+webkit.org/b/123561 printing/quirks-percentage-height-body.html [ ImageOnlyFailure ]
+webkit.org/b/123561 printing/quirks-percentage-height.html [ ImageOnlyFailure ]
 webkit.org/b/123561 printing/setPrinting.html [ Missing ]
 webkit.org/b/123561 printing/simultaneous-position-float-change.html [ Missing ]
 webkit.org/b/123561 printing/single-line-must-not-be-split-into-two-pages.html [ Missing ]
+webkit.org/b/123561 printing/standards-percentage-heights.html [ ImageOnlyFailure ]
 webkit.org/b/123561 printing/width-overflow.html [ Missing ]
 
 # crypto.subtle is not yet enabled, but digest algorithms are already implemented
@@ -1522,12 +1537,6 @@ webkit.org/b/133320 crypto/subtle/hmac-generate-key.html [ Pass ]
 webkit.org/b/133320 crypto/subtle/hmac-import-jwk.html [ Pass ]
 webkit.org/b/133320 crypto/subtle/hmac-sign-verify-empty-key.html [ Pass ]
 webkit.org/b/133320 crypto/subtle/hmac-sign-verify.html [ Pass ]
-
-# Known WebGL conformance test failures, fails on Intel and AMD hardware
-webgl/1.0.2/conformance/glsl/literals/float_literal.vert.html [ Failure ]
-
-# ANGLE_instanced_arrays not implemented on efl
-fast/canvas/webgl/angle-instanced-arrays.html [ Skip ]
 
 # Missing EFL's accessibility functions
 webkit.org/b/111984 accessibility/aria-hidden-updates-alldescendants.html [ Failure ]
@@ -1590,9 +1599,6 @@ webkit.org/b/78290 fast/dom/MutationObserver/end-of-task-delivery.html [ Failure
 
 # testRunner.setUseDeferredFrameLoading() is not implemented in WK2. Skipped so it does not generate PNG results.
 webkit.org/b/93980 http/tests/appcache/load-from-appcache-defer-resume-crash.html [ Skip ]
-
-# WebKitTestRunner needs an implementation for testRunner.setStorageDatabaseIdleInterval
-webkit.org/b/93982 storage/domstorage/storage-close-database-on-idle.html [ Timeout ]
 
 # The following test makes the fast/parser/document-write-ignores-later-network-bytes.html test crash
 webkit.org/b/98345 fast/parser/document-open-in-unload.html [ Skip ]
@@ -1841,7 +1847,11 @@ webkit.org/b/128670 js/dom/dom-static-property-for-in-iteration.html [ Failure ]
 
 webkit.org/b/128973 fast/multicol/span/span-as-immediate-columns-child-dynamic.html [ Failure ]
 
+# HIDPI-related tests do not work
+webkit.org/b/102097 compositing/hidpi-transform-with-render-layer-on-fractional-pixel-value.html [ ImageOnlyFailure ]
+webkit.org/b/102097 fast/backgrounds/hidpi-bitmap-background-repeat-on-subpixel-position.html [ ImageOnlyFailure ]
 webkit.org/b/102097 fast/repaint/hidpi-device-pixel-based-repaint-rect-tracking.html [ Failure ]
+webkit.org/b/102097 svg/text/hidpi-text-selection-rect-position.html [ ImageOnlyFailure ]
 
 # Failing after r150802
 webkit.org/b/125577 compositing/overlap-blending/reflection-opacity-huge.html [ ImageOnlyFailure ]
@@ -1892,9 +1902,6 @@ webkit.org/b/130020 webaudio/codec-tests/wav/24bit-22khz-resample.html [ Failure
 
 webkit.org/b/130340 fast/css/cascade/box-shadow-and-webkit-box-shadow-cascade-order.html [ ImageOnlyFailure ]
 
-# Need HighDPI support
-webkit.org/b/131987 fast/backgrounds/hidpi-background-image-contain-cover-scale-needs-more-precision.html [ ImageOnlyFailure ]
-webkit.org/b/131987 fast/backgrounds/hidpi-bitmap-background-repeat-on-subpixel-position.html [ ImageOnlyFailure ]
 webkit.org/b/131987 fast/borders/hidpi-border-image-gradient-on-subpixels.html [ ImageOnlyFailure ]
 webkit.org/b/131987 fast/borders/hidpi-double-border-with-border-radius-always-produce-solid-line.html [ ImageOnlyFailure ]
 webkit.org/b/131987 fast/borders/hidpi-simple-hairline-border-painting.html [ ImageOnlyFailure ]
@@ -1907,15 +1914,7 @@ webkit.org/b/131987 fast/repaint/hidpi-absolute-positioned-element-wrong-cliprec
 webkit.org/b/131987 fast/repaint/hidpi-transform-on-subpixel-repaintrect.html [ Failure ]
 webkit.org/b/131987 fast/repaint/hidpi-wrong-repaint-rect-when-parent-has-noncompositing-transform.html [ Failure ]
 webkit.org/b/131987 fast/inline-block/hidpi-margin-top-with-subpixel-value-and-overflow-hidden.html [ ImageOnlyFailure ]
-webkit.org/b/131987 svg/text/hidpi-text-selection-rect-position.html [ ImageOnlyFailure ]
-
 webkit.org/b/132049 fast/css3-text/css3-text-decoration/text-decoration-skip/glyph-inside-underline.html [ ImageOnlyFailure ]
-
-# Failing after r169048
-webkit.org/b/133302 fast/shapes/shape-outside-floats/shape-outside-floats-inset-rounded-large-radius.html [ ImageOnlyFailure ]
-webkit.org/b/133302 fast/shapes/shape-outside-floats/shape-outside-rounded-inset.html [ ImageOnlyFailure ]
-
-webkit.org/b/133306 fast/canvas/webgl/css-webkit-canvas-repaint.html [ Failure ]
 
 # Failures EFL WK2 since the inception
 webkit.org/b/133484 accessibility/content-editable-set-inner-text-generates-axvalue-notification.html [ Timeout ]
@@ -1944,9 +1943,6 @@ svg/transforms/text-with-pattern-inside-transformed-html.xhtml [ Failure ]
 webkit.org/b/133220 fast/events/shadow-event-path.html [ Failure ]
 webkit.org/b/133220 fast/events/shadow-event-path-2.html [ Failure ]
 
-# Failing after r168868
-webkit.org/b/133307 fast/forms/number/number-spinbutton-in-multi-column.html [ Failure ]
-
 webkit.org/b/133308 fast/selectors/hover-quirks.html [ Failure ]
 
 # Failures EFL since the inception
@@ -1961,10 +1957,12 @@ webkit.org/b/133974 fast/css3-text/css3-text-decoration/text-decoration-skip/tex
 
 # Difference invisible at the naked eye with Latin Modern Math.
 webkit.org/b/134153 mathml/presentation/mo-stacked-glyphs.html [ ImageOnlyFailure ]
+webkit.org/b/134153 mathml/presentation/scripts-subsup.html [ ImageOnlyFailure ]
 
 webkit.org/b/134712 svg/masking/mask-transformed-text-missing.svg [ ImageOnlyFailure ]
 
 webkit.org/b/134756 fast/dom/HTMLImageElement/sizes/image-sizes-2x.html [ Failure ]
+webkit.org/b/134756 fast/dom/HTMLImageElement/sizes/image-sizes-js-change.html [ Failure ]
 
 webkit.org/b/135504 svg/css/parse-height.html [ Failure ]
 webkit.org/b/135504 svg/css/parse-length.html [ Failure ]
@@ -1993,6 +1991,7 @@ webkit.org/b/136221 css3/shapes/shape-outside/values/shape-outside-polygon-004.h
 webkit.org/b/136221 css3/shapes/shape-outside/values/shape-outside-shape-arguments-000.html [ Failure ]
 
 webkit.org/b/136223 fast/ruby/ruby-base-merge-block-children-crash-2.html [ Failure ]
+webkit.org/b/136223 fast/ruby/ruby-justification.html [ ImageOnlyFailure ]
 
 # Started failing after r172835
 webkit.org/b/136226 fast/events/constructors/mouse-event-constructor.html [ Failure ]
@@ -2006,6 +2005,7 @@ webkit.org/b/136406 compositing/backing/backface-visibility-in-transformed.html 
 webkit.org/b/136406 compositing/backing/backface-visibility.html [ Failure ]
 webkit.org/b/136406 compositing/contents-opaque/control-layer.html [ Failure ]
 webkit.org/b/136406 compositing/contents-opaque/hidden-with-visible-text.html [ Failure ]
+webkit.org/b/136406 compositing/contents-opaque/opaque-with-clip-path.html [ ImageOnlyFailure ]
 webkit.org/b/136406 compositing/contents-scale/animating.html [ Failure ]
 webkit.org/b/136406 compositing/contents-scale/rounded-contents-scale.html [ Failure ]
 webkit.org/b/136406 compositing/contents-scale/scaled-ancestor.html [ Failure ]
@@ -2129,3 +2129,32 @@ webkit.org/b/141896 fast/borders/border-radius-on-html.html [ ImageOnlyFailure ]
 # Need to investigate why these security tests have been failed since r144338.
 webkit.org/b/141958 http/tests/security/XFrameOptions/x-frame-options-deny-multiple-clients.html [ Failure ]
 webkit.org/b/141958 http/tests/security/cross-frame-access-callback-explicit-domain-ALLOW.html [ Failure ]
+
+webkit.org/b/142426 compositing/masks/compositing-clip-path-and-mask.html [ ImageOnlyFailure ]
+webkit.org/b/142426 compositing/masks/compositing-clip-path-mask-change.html [ ImageOnlyFailure ]
+webkit.org/b/142426 compositing/masks/compositing-clip-path.html [ ImageOnlyFailure ]
+webkit.org/b/142426 compositing/masks/reference-clip-path-on-composited.html [ ImageOnlyFailure ]
+
+webkit.org/b/142427 fast/regions/scrolling/wheel-scroll-abspos.html [ ImageOnlyFailure ]
+webkit.org/b/142427 fast/regions/scrolling/wheel-scroll.html [ ImageOnlyFailure ]
+
+webkit.org/b/142451 fast/text/emphasis-combined-text.html [ Failure ]
+webkit.org/b/142451 fast/text/emphasis-vertical.html [ Failure ]
+
+webkit.org/b/142452 fast/writing-mode/Kusa-Makura-background-canvas.html [ Failure ]
+webkit.org/b/142452 fast/writing-mode/broken-ideographic-font.html [ Failure ]
+
+# Need new baseline since r181260.
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-squeeze-1.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-squeeze-2.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-squeeze-3.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-squeeze-4.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-stretch-1.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-stretch-2.svg [ Failure ]
+webkit.org/b/142481 svg/text/select-textLength-spacingAndGlyphs-stretch-3.svg [ Failure ]
+
+webkit.org/b/142483 fast/css/font-face-default-font.html [ Failure ]
+webkit.org/b/142483 fast/css/font-face-in-media-rule.html [ Failure ]
+
+# This feature is only enabled on Mac and iOS right now
+contentfiltering [ Skip ]

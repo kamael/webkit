@@ -1453,7 +1453,7 @@ void CaretBase::invalidateCaretRect(Node* node, bool caretRectChanged)
         return;
 
     if (RenderView* view = node->document().renderView()) {
-        if (shouldRepaintCaret(view, node->isContentEditable(Node::UserSelectAllIsAlwaysNonEditable)))
+        if (shouldRepaintCaret(view, isEditableNode(*node)))
             repaintCaretForLocalRect(node, localCaretRectWithoutUpdate());
     }
 }
@@ -2146,7 +2146,7 @@ void FrameSelection::didLayout()
     updateDataDetectorsForSelection();
 }
 
-#ifndef NDEBUG
+#if ENABLE(TREE_DEBUGGING)
 
 void FrameSelection::formatForDebugger(char* buffer, unsigned length) const
 {
@@ -2585,7 +2585,7 @@ void FrameSelection::setCaretColor(const Color& caretColor)
 
 }
 
-#ifndef NDEBUG
+#if ENABLE(TREE_DEBUGGING)
 
 void showTree(const WebCore::FrameSelection& sel)
 {

@@ -322,4 +322,7 @@ enum PageOverlayType {
     boolean isPagePlayingAudio();
     
     File createFile(DOMString url);
+    void queueMicroTask(long testNumber);
+
+    [Conditional=CONTENT_FILTERING] readonly attribute MockContentFilterSettings mockContentFilterSettings;
 };

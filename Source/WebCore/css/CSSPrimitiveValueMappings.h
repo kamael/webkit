@@ -527,6 +527,12 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(ControlPart e)
     case MediaTimeRemainingPart:
         m_value.valueID = CSSValueMediaTimeRemainingDisplay;
         break;
+    case MediaControlsLightBarBackgroundPart:
+        m_value.valueID = CSSValueMediaControlsLightBarBackground;
+        break;
+    case MediaControlsDarkBarBackgroundPart:
+        m_value.valueID = CSSValueMediaControlsDarkBarBackground;
+        break;
     case MenulistPart:
         m_value.valueID = CSSValueMenulist;
         break;
@@ -602,6 +608,11 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(ControlPart e)
     case CapsLockIndicatorPart:
         m_value.valueID = CSSValueCapsLockIndicator;
         break;
+#if ENABLE(ATTACHMENT_ELEMENT)
+    case AttachmentPart:
+        m_value.valueID = CSSValueAttachment;
+        break;
+#endif
 #if ENABLE(SERVICE_CONTROLS)
     case ImageControlsButtonPart:
         m_value.valueID = CSSValueImageControlsButton;
@@ -4107,6 +4118,9 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(BlendMode blendMode)
     case BlendModePlusDarker:
         m_value.valueID = CSSValuePlusDarker;
         break;
+    case BlendModePlusLighter:
+        m_value.valueID = CSSValuePlusLighter;
+        break;
     }
 }
 
@@ -4149,6 +4163,8 @@ template<> inline CSSPrimitiveValue::operator BlendMode() const
         return BlendModeLuminosity;
     case CSSValuePlusDarker:
         return BlendModePlusDarker;
+    case CSSValuePlusLighter:
+        return BlendModePlusLighter;
     default:
         break;
     }
@@ -4585,9 +4601,23 @@ enum LengthConversion {
     CalculatedConversion = 1 << 4
 };
 
+inline bool CSSPrimitiveValue::convertingToLengthRequiresNonNullStyle(int lengthConversion) const
+{
+    ASSERT(isFontRelativeLength());
+    // This matches the implementation in CSSPrimitiveValue::computeLengthDouble().
+    switch (m_primitiveUnitType) {
+    case CSS_EMS:
+    case CSS_EXS:
+    case CSS_CHS:
+        return lengthConversion & (FixedIntegerConversion | FixedFloatConversion);
+    default:
+        return false;
+    }
+}
+
 template<int supported> Length CSSPrimitiveValue::convertToLength(const CSSToLengthConversionData& conversionData) const
 {
-    if ((supported & (FixedIntegerConversion | FixedFloatConversion)) && isFontRelativeLength() && (!conversionData.style() || !conversionData.rootStyle()))
+    if (isFontRelativeLength() && convertingToLengthRequiresNonNullStyle(supported) && !conversionData.style())
         return Length(Undefined);
     if ((supported & FixedIntegerConversion) && isLength())
         return computeLength<Length>(conversionData);
@@ -5241,6 +5271,40 @@ template<> inline CSSPrimitiveValue::operator ScrollSnapType() const
     }
     ASSERT_NOT_REACHED();
     return ScrollSnapType::None;
+}
+#endif
+
+#if ENABLE(CSS_TRAILING_WORD)
+template<> inline CSSPrimitiveValue::CSSPrimitiveValue(TrailingWord e)
+    : CSSValue(PrimitiveClass)
+{
+    m_primitiveUnitType = CSS_VALUE_ID;
+    switch (e) {
+    case TrailingWord::Auto:
+        m_value.valueID = CSSValueAuto;
+        break;
+    case TrailingWord::PartiallyBalanced:
+        m_value.valueID = CSSValueWebkitPartiallyBalanced;
+        break;
+    default:
+        ASSERT_NOT_REACHED();
+        break;
+    }
+}
+
+template<> inline CSSPrimitiveValue::operator TrailingWord() const
+{
+    ASSERT(isValueID());
+    switch (m_value.valueID) {
+    case CSSValueAuto:
+        return TrailingWord::Auto;
+    case CSSValueWebkitPartiallyBalanced:
+        return TrailingWord::PartiallyBalanced;
+    default:
+        break;
+    }
+    ASSERT_NOT_REACHED();
+    return TrailingWord::Auto;
 }
 #endif
 

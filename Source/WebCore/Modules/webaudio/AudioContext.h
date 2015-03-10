@@ -85,9 +85,6 @@ public:
     
     bool isOfflineContext() { return m_isOfflineContext; }
 
-    // Document notification
-    virtual void stop() override;
-
     Document* document() const; // ASSERTs if document no longer exists.
 
     AudioDestinationNode* destination() { return m_destinationNode.get(); }
@@ -230,8 +227,6 @@ public:
     virtual EventTargetInterface eventTargetInterface() const override final { return AudioContextEventTargetInterfaceType; }
     virtual ScriptExecutionContext* scriptExecutionContext() const override final;
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(complete);
-
     // Reconcile ref/deref which are defined both in ThreadSafeRefCounted and EventTarget.
     using ThreadSafeRefCounted<AudioContext>::ref;
     using ThreadSafeRefCounted<AudioContext>::deref;
@@ -264,8 +259,6 @@ protected:
     static bool isSampleRateRangeGood(float sampleRate);
     
 private:
-    virtual const char* activeDOMObjectName() const override { return "AudioContext"; }
-
     void constructCommon();
 
     void lazyInitialize();
@@ -295,6 +288,11 @@ private:
     // uniquely connected to.  See the AudioNode::ref() and AudioNode::deref() methods for more details.
     void refNode(AudioNode*);
     void derefNode(AudioNode*);
+
+    // ActiveDOMObject API.
+    void stop() override;
+    bool canSuspend() const override;
+    const char* activeDOMObjectName() const override;
 
     // When the context goes away, there might still be some sources which haven't finished playing.
     // Make sure to dereference them here.
@@ -363,6 +361,9 @@ private:
     std::atomic<int> m_activeSourceCount;
 
     BehaviorRestrictions m_restrictions;
+
+    enum class State { Suspended, Running, Closed };
+    State m_state;
 };
 
 } // WebCore

@@ -76,7 +76,7 @@ size_t sizeOfCall()
 size_t sizeOfCallVarargs()
 {
 #if CPU(ARM64)
-    return 300;
+    return 332;
 #else
     return 275;
 #endif
@@ -94,9 +94,9 @@ size_t sizeOfCallForwardVarargs()
 size_t sizeOfConstructVarargs()
 {
 #if CPU(ARM64)
-    return 284;
+    return 300;
 #else
-    return 253;
+    return 275;
 #endif
 }
 

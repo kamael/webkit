@@ -26,7 +26,7 @@
 #include "config.h"
 #include "WKPageGroup.h"
 
-#include "APIUserContentFilter.h"
+#include "APIUserContentExtension.h"
 #include "WKAPICast.h"
 #include "WebPageGroup.h"
 #include "WebPreferences.h"
@@ -82,17 +82,28 @@ void WKPageGroupRemoveAllUserScripts(WKPageGroupRef pageGroupRef)
 void WKPageGroupAddUserContentFilter(WKPageGroupRef pageGroupRef, WKUserContentFilterRef userContentFilterRef)
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    toImpl(pageGroupRef)->addUserContentFilter(*toImpl(userContentFilterRef));
+    toImpl(pageGroupRef)->addUserContentExtension(*toImpl(userContentFilterRef));
 #else
     UNUSED_PARAM(pageGroupRef);
     UNUSED_PARAM(userContentFilterRef);
 #endif
 }
 
+void WKPageGroupRemoveUserContentFilter(WKPageGroupRef pageGroupRef, WKStringRef userContentFilterNameRef)
+{
+#if ENABLE(CONTENT_EXTENSIONS)
+    toImpl(pageGroupRef)->removeUserContentExtension(toWTFString(userContentFilterNameRef));
+#else
+    UNUSED_PARAM(pageGroupRef);
+    UNUSED_PARAM(userContentFilterNameRef);
+#endif
+}
+
+
 void WKPageGroupRemoveAllUserContentFilters(WKPageGroupRef pageGroupRef)
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    toImpl(pageGroupRef)->removeAllUserScripts();
+    toImpl(pageGroupRef)->removeAllUserContentExtensions();
 #else
     UNUSED_PARAM(pageGroupRef);
 #endif

@@ -89,11 +89,6 @@ public:
     String binaryType() const;
     void setBinaryType(const String&);
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(open);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(message);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(close);
-
     // EventTarget functions.
     virtual EventTargetInterface eventTargetInterface() const override;
     virtual ScriptExecutionContext* scriptExecutionContext() const override;
@@ -113,13 +108,13 @@ public:
 private:
     explicit WebSocket(ScriptExecutionContext&);
 
-    // ActiveDOMObject functions.
-    virtual void contextDestroyed() override;
-    virtual bool canSuspend() const override;
-    virtual void suspend(ReasonForSuspension) override;
-    virtual void resume() override;
-    virtual void stop() override;
-    virtual const char* activeDOMObjectName() const override { return "WebSocket"; }
+    // ActiveDOMObject API.
+    void contextDestroyed() override;
+    bool canSuspend() const override;
+    void suspend(ReasonForSuspension) override;
+    void resume() override;
+    void stop() override;
+    const char* activeDOMObjectName() const override;
 
     virtual void refEventTarget() override { ref(); }
     virtual void derefEventTarget() override { deref(); }

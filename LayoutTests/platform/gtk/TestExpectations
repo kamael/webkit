@@ -148,6 +148,8 @@ webkit.org/b/98927 fast/dom/DeviceOrientation [ Skip ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=81697 Skip file:// based notifications tests
 fast/notifications
+fast/history/page-cache-notification-non-suspendable.html
+fast/history/page-cache-notification-suspendable.html
 
 # we do not enable legacy notifications
 http/tests/notifications/legacy/window-show-on-click.html
@@ -314,9 +316,6 @@ webkit.org/b/99029 vibration [ Failure ]
 
 # DumpRenderTree code to enable Java is currently a no-op
 webkit.org/b/99031 java [ Skip ]
-
-# Directory upload is not enabled.
-webkit.org/b/99032 fast/forms/file/input-file-directory-upload.html [ Timeout ]
 
 # Pointer Lock is not implemented.
 webkit.org/b/99036 pointer-lock [ Skip ]
@@ -601,7 +600,29 @@ webkit.org/b/141591 inspector-protocol/debugger/breakpoint-eval-with-exception.h
 
 webkit.org/b/118126 css3/flexbox/image-percent-max-height.html [ ImageOnlyFailure ]
 
+webkit.org/b/142268 editing/pasteboard/copy-paste-attachment.html [ Failure ]
+webkit.org/b/142269 fast/attachment/attachment-dom.html [ Failure ]
+webkit.org/b/142270 fast/canvas/canvas-ellipse-zero-lineto.html [ Failure ]
+webkit.org/b/142142 media/video-volume-slider.html [ Failure ]
 
+webkit.org/b/127109 media/video-object-fit.html [ ImageOnlyFailure ]
+webkit.org/b/142283 fast/regions/overflow/overflow-first-and-last-regions.html [ ImageOnlyFailure ]
+webkit.org/b/142286 fast/regions/scrolling/wheel-scroll-abspos.html [ ImageOnlyFailure ]
+webkit.org/b/142286 fast/regions/scrolling/wheel-scroll.html [ ImageOnlyFailure ]
+webkit.org/b/142287 svg/clip-path/clip-path-line-use-before-defined.svg [ ImageOnlyFailure ]
+webkit.org/b/142288 css3/masking/mask-svg-clipped-fragmentId.html [ ImageOnlyFailure ]
+webkit.org/b/142289 fast/text/font-kerning.html [ ImageOnlyFailure ]
+webkit.org/b/142289 mathml/presentation/scripts-subsup.html [ ImageOnlyFailure ]
+webkit.org/b/142291 fast/regions/repaint/region-painting-in-composited-view.html [ ImageOnlyFailure ]
+webkit.org/b/142291 transforms/2d/perspective-not-fixed-container.html [ ImageOnlyFailure ]
+webkit.org/b/142291 transforms/hittest-translated-content-off-to-infinity-and-back.html [ ImageOnlyFailure ]
+webkit.org/b/142291 css3/calc/transforms-translate.html [ ImageOnlyFailure ]
+webkit.org/b/142291 fast/clip/clip-when-rect-has-fractional-pixel-value.html [ ImageOnlyFailure ]
+webkit.org/b/142291 fast/layers/no-clipping-overflow-hidden-hardware-acceleration.html [ ImageOnlyFailure ]
+webkit.org/b/142291 fast/regions/repaint/fixed-in-named-flow-cb-changed.html [ ImageOnlyFailure ]
+
+# TODO Scroll snap points
+css3/scroll-snap [ Skip ]
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Expected failures
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -1230,10 +1251,6 @@ webkit.org/b/130411 editing/spelling/spellcheck-paste-continuous-disabled.html [
 
 Bug(GTK) plugins/reloadplugins-and-pages.html [ Timeout ]
 
-Bug(GTK) http/tests/local/blob/send-hybrid-blob.html [ Timeout ]
-
-Bug(GTK) fast/forms/file/selected-files-from-history-state.html [ Timeout ]
-
 Bug(GTK) fast/forms/select/menulist-popup-crash.html [ Timeout ]
 
 Bug(GTK) fast/forms/select/optgroup-clicking.html [ Timeout ]
@@ -1283,6 +1300,15 @@ webkit.org/b/139362 inspector/css/pseudo-element-matches.html [ Timeout ]
 webkit.org/b/139362 inspector/css/selector-specificity.html [ Timeout Pass ]
 
 webkit.org/b/139363 media/media-controls-timeline-updates.html [ Timeout ]
+
+webkit.org/b/142292 fast/images/animated-gif-window-resizing.html [ Timeout ]
+webkit.org/b/142292 fast/images/animated-gif-zooming.html [ Timeout ]
+
+webkit.org/b/142488 http/tests/appcache/404-resource-with-slow-main-resource.php [ Timeout ]
+webkit.org/b/141959 http/tests/media/clearkey/clear-key-hls-aes128.html [ Timeout ]
+webkit.org/b/142489 http/tests/media/video-play-waiting.html [ Timeout ]
+webkit.org/b/142490 inspector/css/selector-dynamic-specificity.html [ Timeout ]
+webkit.org/b/142491 media/media-source/media-source-stalled-holds-sleep-assertion.html [ Timeout ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Tests timing out
@@ -1358,7 +1384,6 @@ webkit.org/b/63706 fast/events/selectstart-by-drag.html [ Failure ]
 webkit.org/b/63706 fast/events/standalone-image-drag-to-editable.html [ Failure Timeout ]
 webkit.org/b/63706 fast/forms/drag-into-textarea.html [ Failure ]
 webkit.org/b/63706 fast/forms/drag-out-of-textarea.html [ Failure ]
-webkit.org/b/63706 fast/forms/file/input-file-write-files.html [ Failure Timeout ]
 webkit.org/b/63706 fast/forms/range/slider-delete-while-dragging-thumb.html [ Failure ]
 webkit.org/b/63706 fast/lists/drag-into-marker.html [ Failure ]
 webkit.org/b/63706 http/tests/security/resources/drag-drop-allowed.html [ Skip ]
@@ -1384,10 +1409,6 @@ webkit.org/b/78290 fast/dom/MutationObserver/end-of-task-delivery.html [ Failure
 # Implement testRunner.setUseDeferredFrameLoading
 # http://webkit.org/b/93980
 webkit.org/b/93980 http/tests/appcache/load-from-appcache-defer-resume-crash.html [ Failure ]
-
-# Implement testRunner.setStorageDatabaseIdleInterval
-# http://webkit.org/b/93982
-webkit.org/b/93982 storage/domstorage/storage-close-database-on-idle.html [ Timeout ]
 
 # WebKitTestRunner needs a more-complete implementation of eventSender
 # https://bugs.webkit.org/show_bug.cgi?id=42194
@@ -1450,7 +1471,6 @@ webkit.org/b/39160 security/block-test-no-port.html [ Failure ]
 Bug(GTK) editing/selection/5136696.html [ Failure ]
 Bug(GTK) editing/selection/inactive-selection.html [ Failure ]
 Bug(GTK) fast/css/disabled-author-styles.html [ Failure ]
-Bug(GTK) fast/dom/Window/window-postmessage-clone.html [ Failure Timeout ]
 Bug(GTK) fast/events/backspace-navigates-back.html [ Failure ]
 Bug(GTK) fast/events/keydown-leftright-keys.html [ Failure ]
 Bug(GTK) fast/events/keydown-numpad-keys.html [ Failure ]
@@ -1769,9 +1789,6 @@ webkit.org/b/105693 http/tests/multipart/multipart-wait-before-boundary.html [ S
 
 # Does not render the rectangle as it should, even though the multiple parts seem to work
 webkit.org/b/54251 http/tests/multipart/invalid-image-data.html [ Failure ]
-
-# Fails because it does not throw a couple of expected exceptions
-Bug(GTK) http/tests/local/fileapi/send-sliced-dragged-file.html [ Failure Timeout ]
 
 webkit.org/b/72248 editing/spelling/spelling-unified-emulation.html [ Failure ]
 
@@ -2126,6 +2143,9 @@ webkit.org/b/107194 http/tests/security/cross-origin-worker-indexeddb.html [ Ski
 webkit.org/b/107194 http/tests/security/no-indexeddb-from-sandbox.html [ Skip ]
 webkit.org/b/107194 crypto/subtle/rsa-indexeddb.html [ Skip ]
 webkit.org/b/107194 inspector-protocol/indexeddb/basics.html [ Skip ]
+webkit.org/b/107194 fast/history/page-cache-indexed-closed-db.html [ Skip ]
+webkit.org/b/107194 fast/history/page-cache-indexed-opened-db.html [ Skip ]
+webkit.org/b/107194 fast/history/page-cache-webdatabase-opened-db.html [ Skip ]
 
 # Test marked in TestExpectations as failing on non-retina displays, passing on GTK port
 webkit.org/b/129113 fast/multicol/newmulticol/clipping.html [ Pass ]
@@ -2337,6 +2357,21 @@ webkit.org/b/140252 fast/text/khmer-lao-font.html [ Failure ]
 webkit.org/b/140252 fast/text/midword-break-before-surrogate-pair-2.html [ Failure ]
 webkit.org/b/140252 svg/custom/svg-fonts-fallback.xhtml [ Failure ]
 
+webkit.org/b/142479 svg/text/select-textLength-spacingAndGlyphs-squeeze-2.svg [ Failure ]
+webkit.org/b/142479 svg/text/select-textLength-spacingAndGlyphs-squeeze-3.svg [ Failure ]
+webkit.org/b/142479 svg/text/select-textLength-spacingAndGlyphs-squeeze-4.svg [ Failure ]
+webkit.org/b/142479 svg/text/select-textLength-spacingAndGlyphs-stretch-2.svg [ Failure ]
+webkit.org/b/142479 svg/text/select-textLength-spacingAndGlyphs-stretch-3.svg [ Failure ]
+
+webkit.org/b/142480 fast/dom/event-handler-attributes.html [ Failure ]
+webkit.org/b/142482 http/tests/security/mixedContent/insecure-audio-video-in-main-frame.html [ Failure ]
+
+webkit.org/b/142487 fast/regions/region-overflow-break.html [ ImageOnlyFailure ]
+webkit.org/b/142423 svg/fonts/svg-font-horiz-origin.html [ ImageOnlyFailure ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Tests failing
 #////////////////////////////////////////////////////////////////////////////////////////
+
+# This feature is only enabled on Mac and iOS right now
+contentfiltering [ Skip ]

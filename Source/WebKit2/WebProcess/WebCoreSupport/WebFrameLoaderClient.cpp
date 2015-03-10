@@ -102,9 +102,6 @@ WebFrameLoaderClient::~WebFrameLoaderClient()
     
 void WebFrameLoaderClient::frameLoaderDestroyed()
 {
-    if (WebPage* webPage = m_frame->page())
-        webPage->injectedBundleLoaderClient().willDestroyFrame(webPage, m_frame);
-
     m_frame->invalidate();
 
     // Balances explicit ref() in WebFrame::create().
@@ -1646,10 +1643,10 @@ PassRefPtr<FrameNetworkingContext> WebFrameLoaderClient::createNetworkingContext
 }
 
 #if ENABLE(CONTENT_FILTERING)
-void WebFrameLoaderClient::contentFilterDidBlockLoad(std::unique_ptr<WebCore::ContentFilter> contentFilter)
+void WebFrameLoaderClient::contentFilterDidBlockLoad(WebCore::ContentFilterUnblockHandler unblockHandler)
 {
     if (WebPage* webPage = m_frame->page())
-        webPage->send(Messages::WebPageProxy::ContentFilterDidBlockLoadForFrame(*contentFilter, m_frame->frameID()));
+        webPage->send(Messages::WebPageProxy::ContentFilterDidBlockLoadForFrame(unblockHandler, m_frame->frameID()));
 }
 #endif
 

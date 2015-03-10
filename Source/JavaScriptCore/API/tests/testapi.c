@@ -45,6 +45,7 @@
 #include <windows.h>
 #endif
 
+#include "CompareAndSwapTest.h"
 #include "CustomGlobalObjectClassTest.h"
 
 #if JSC_OBJC_API_ENABLED
@@ -1192,6 +1193,8 @@ int main(int argc, char* argv[])
     ::SetErrorMode(0);
 #endif
 
+    testCompareAndSwap();
+
 #if JSC_OBJC_API_ENABLED
     testObjectiveCAPI();
 #endif
@@ -1889,6 +1892,28 @@ int main(int argc, char* argv[])
         }
         JSScriptRelease(scriptObject);
         free(scriptUTF8);
+    }
+
+    // Check Promise is not exposed.
+    {
+        JSObjectRef globalObject = JSContextGetGlobalObject(context);
+        {
+            JSStringRef promiseProperty = JSStringCreateWithUTF8CString("Promise");
+            ASSERT(!JSObjectHasProperty(context, globalObject, promiseProperty));
+            JSStringRelease(promiseProperty);
+        }
+        {
+            JSStringRef script = JSStringCreateWithUTF8CString("typeof Promise");
+            JSStringRef undefined = JSStringCreateWithUTF8CString("undefined");
+            JSValueRef value = JSEvaluateScript(context, script, NULL, NULL, 1, NULL);
+            ASSERT(JSValueIsString(context, value));
+            JSStringRef valueAsString = JSValueToStringCopy(context, value, NULL);
+            ASSERT(JSStringIsEqual(valueAsString, undefined));
+            JSStringRelease(valueAsString);
+            JSStringRelease(undefined);
+            JSStringRelease(script);
+        }
+        printf("PASS: Promise is not exposed under JSContext API.\n");
     }
 
 #if OS(DARWIN)

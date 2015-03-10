@@ -525,12 +525,12 @@ Object.defineProperty(String, "tokenizeFormatString",
 
         function addStringToken(str)
         {
-            tokens.push({ type: "string", value: str });
+            tokens.push({type: "string", value: str});
         }
 
         function addSpecifierToken(specifier, precision, substitutionIndex)
         {
-            tokens.push({ type: "specifier", specifier: specifier, precision: precision, substitutionIndex: substitutionIndex });
+            tokens.push({type: "specifier", specifier, precision, substitutionIndex});
         }
 
         var index = 0;
@@ -581,25 +581,6 @@ Object.defineProperty(String, "tokenizeFormatString",
         addStringToken(format.substring(index));
 
         return tokens;
-    }
-});
-
-Object.defineProperty(String.prototype, "startsWith",
-{
-    value: function(string)
-    {
-        return this.lastIndexOf(string, 0) === 0;
-    }
-});
-
-Object.defineProperty(String.prototype, "endsWith",
-{
-    value: function(string)
-    {
-        var position = this.length - string.length;
-        if (position < 0)
-            return false;
-        return this.indexOf(string, position) === position;
     }
 });
 
@@ -674,7 +655,7 @@ Object.defineProperty(String, "format",
     value: function(format, substitutions, formatters, initialValue, append)
     {
         if (!format || !substitutions || !substitutions.length)
-            return { formattedResult: append(initialValue, format), unusedSubstitutions: substitutions };
+            return {formattedResult: append(initialValue, format), unusedSubstitutions: substitutions};
 
         function prettyFunctionName()
         {
@@ -735,7 +716,7 @@ Object.defineProperty(String, "format",
             unusedSubstitutions.push(substitutions[i]);
         }
 
-        return {formattedResult: result, unusedSubstitutions: unusedSubstitutions};
+        return {formattedResult: result, unusedSubstitutions};
     }
 });
 
@@ -929,7 +910,7 @@ function parseMIMEType(fullMimeType)
             encoding = subparts[1].replace("^\"|\"$", ""); // Trim quotes.
     }
 
-    return {type: type, boundary: boundary || null, encoding: encoding || null};
+    return {type, boundary: boundary || null, encoding: encoding || null};
 }
 
 function simpleGlobStringToRegExp(globString, regExpFlags)
@@ -1029,6 +1010,11 @@ Object.defineProperty(Array.prototype, "binaryIndexOf",
 function isFunctionStringNativeCode(str)
 {
     return str.endsWith("{\n    [native code]\n}");
+}
+
+function doubleQuotedString(str)
+{
+    return "\"" + str.replace(/"/g, "\\\"") + "\"";
 }
 
 function clamp(min, value, max)

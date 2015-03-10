@@ -53,7 +53,7 @@ class XMLHttpRequest final : public ScriptWrappable, public RefCounted<XMLHttpRe
     WTF_MAKE_FAST_ALLOCATED;
 public:
     static Ref<XMLHttpRequest> create(ScriptExecutionContext&);
-    ~XMLHttpRequest();
+    WEBCORE_EXPORT ~XMLHttpRequest();
 
     // These exact numeric values are important because JS expects them.
     enum State {
@@ -144,17 +144,6 @@ public:
 
     const ResourceResponse& resourceResponse() const { return m_response; }
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(readystatechange);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(abort);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(load);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadend);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(loadstart);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(progress);
-#if ENABLE(XHR_TIMEOUT)
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(timeout);
-#endif
-
     using RefCounted<XMLHttpRequest>::ref;
     using RefCounted<XMLHttpRequest>::deref;
 
@@ -162,12 +151,12 @@ private:
     explicit XMLHttpRequest(ScriptExecutionContext&);
 
     // ActiveDOMObject
-    virtual void contextDestroyed() override;
-    virtual bool canSuspend() const override;
-    virtual void suspend(ReasonForSuspension) override;
-    virtual void resume() override;
-    virtual void stop() override;
-    virtual const char* activeDOMObjectName() const override { return "XMLHttpRequest"; }
+    void contextDestroyed() override;
+    bool canSuspend() const override;
+    void suspend(ReasonForSuspension) override;
+    void resume() override;
+    void stop() override;
+    const char* activeDOMObjectName() const override;
 
     virtual void refEventTarget() override { ref(); }
     virtual void derefEventTarget() override { deref(); }

@@ -355,6 +355,7 @@ void TestController::initialize(int argc, const char* argv[])
         WKContextConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(temporaryFolder + separator + "Databases" + separator + "IndexedDB").get());
         WKContextConfigurationSetLocalStorageDirectory(configuration.get(), toWK(temporaryFolder + separator + "LocalStorage").get());
         WKContextConfigurationSetWebSQLDatabaseDirectory(configuration.get(), toWK(temporaryFolder + separator + "Databases" + separator + "WebSQL").get());
+        WKContextConfigurationSetMediaKeysStorageDirectory(configuration.get(), toWK(temporaryFolder + separator + "MediaKeys").get());
     }
 
     m_context = adoptWK(WKContextCreateWithConfiguration(configuration.get()));
@@ -668,6 +669,8 @@ bool TestController::resetStateToConsistentValues()
 
     m_shouldLogHistoryClientCallbacks = false;
 
+    WKPageGroupRemoveAllUserContentFilters(WKPageGetPageGroup(m_mainWebView->page()));
+
     // Reset main page back to about:blank
     m_doneResetting = false;
 
@@ -692,9 +695,7 @@ void TestController::reattachPageToWebProcess()
 const char* TestController::webProcessName()
 {
     // FIXME: Find a way to not hardcode the process name.
-#if PLATFORM(IOS)
-    return "com.apple.WebKit.WebContent";
-#elif PLATFORM(MAC)
+#if PLATFORM(COCOA)
     return "com.apple.WebKit.WebContent.Development";
 #else
     return "WebProcess";
@@ -704,9 +705,7 @@ const char* TestController::webProcessName()
 const char* TestController::networkProcessName()
 {
     // FIXME: Find a way to not hardcode the process name.
-#if PLATFORM(IOS)
-    return "com.apple.WebKit.Networking";
-#elif PLATFORM(MAC)
+#if PLATFORM(COCOA)
     return "com.apple.WebKit.Networking.Development";
 #else
     return "NetworkProcess";
@@ -715,7 +714,7 @@ const char* TestController::networkProcessName()
 
 void TestController::updateWebViewSizeForTest(const TestInvocation& test)
 {
-    bool isSVGW3CTest = strstr(test.pathOrURL(), "svg/W3C-SVG-1.1") || strstr(test.pathOrURL(), "svg\\W3C-SVG-1.1");
+    bool isSVGW3CTest = test.urlContains("svg/W3C-SVG-1.1") || test.urlContains("svg\\W3C-SVG-1.1");
 
     unsigned width = viewWidth;
     unsigned height = viewHeight;
@@ -729,33 +728,32 @@ void TestController::updateWebViewSizeForTest(const TestInvocation& test)
 
 void TestController::updateWindowScaleForTest(PlatformWebView* view, const TestInvocation& test)
 {
-    WTF::String localPathOrUrl = String(test.pathOrURL());
-    bool needsHighDPIWindow = localPathOrUrl.findIgnoringCase("/hidpi-") != notFound;
+    bool needsHighDPIWindow = test.urlContains("/hidpi-");
     view->changeWindowScaleIfNeeded(needsHighDPIWindow ? 2 : 1);
 }
 
 // FIXME: move into relevant platformConfigureViewForTest()?
-static bool shouldUseFixedLayout(const char* pathOrURL)
+static bool shouldUseFixedLayout(const TestInvocation& test)
 {
 #if ENABLE(CSS_DEVICE_ADAPTATION)
-    if (strstr(pathOrURL, "device-adapt/") || strstr(pathOrURL, "device-adapt\\"))
+    if (test.urlContains("device-adapt/") || test.urlContains("device-adapt\\"))
         return true;
 #endif
 
 #if USE(TILED_BACKING_STORE) && PLATFORM(EFL)
-    if (strstr(pathOrURL, "sticky/") || strstr(pathOrURL, "sticky\\"))
+    if (test.urlContains("sticky/") || test.urlContains("sticky\\"))
         return true;
 #endif
     return false;
 
-    UNUSED_PARAM(pathOrURL);
+    UNUSED_PARAM(test);
 }
 
 void TestController::updateLayoutTypeForTest(const TestInvocation& test)
 {
     auto viewOptions = adoptWK(WKMutableDictionaryCreate());
     auto useFixedLayoutKey = adoptWK(WKStringCreateWithUTF8CString("UseFixedLayout"));
-    auto useFixedLayoutValue = adoptWK(WKBooleanCreate(shouldUseFixedLayout(test.pathOrURL())));
+    auto useFixedLayoutValue = adoptWK(WKBooleanCreate(shouldUseFixedLayout(test)));
     WKDictionarySetItem(viewOptions.get(), useFixedLayoutKey.get(), useFixedLayoutValue.get());
 
     ensureViewSupportsOptions(viewOptions.get());

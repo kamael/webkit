@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2011-2015 Apple Inc. All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,10 +29,12 @@
 #import "DispatchSPI.h"
 #import "IOSurfacePool.h"
 #import "GCController.h"
+#import "JSDOMWindow.h"
 #import "JSDOMWindowBase.h"
 #import "LayerPool.h"
 #import "Logging.h"
 #import "WebCoreSystemInterface.h"
+#import <JavaScriptCore/IncrementalSweeper.h>
 #import <mach/mach.h>
 #import <mach/task_info.h>
 #import <malloc/malloc.h>
@@ -44,10 +46,18 @@
 #import "WebCoreThread.h"
 #endif
 
+extern "C" void cache_simulate_memory_warning_event(uint64_t);
+extern "C" void _sqlite3_purgeEligiblePagerCacheMemory(void);
+
 namespace WebCore {
 
-void MemoryPressureHandler::platformReleaseMemory(bool)
+void MemoryPressureHandler::platformReleaseMemory(bool critical)
 {
+    {
+        ReliefLogger log("Purging SQLite caches");
+        _sqlite3_purgeEligiblePagerCacheMemory();
+    }
+
     {
         ReliefLogger log("Drain LayerPools");
         for (auto& pool : LayerPool::allLayerPools())
@@ -60,6 +70,17 @@ void MemoryPressureHandler::platformReleaseMemory(bool)
     }
 #endif
 
+#if PLATFORM(IOS) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101000
+    if (critical && !isUnderMemoryPressure()) {
+        // libcache listens to OS memory notifications, but for process suspension
+        // or memory pressure simulation, we need to prod it manually:
+        ReliefLogger log("Purging libcache caches");
+        cache_simulate_memory_warning_event(DISPATCH_MEMORYPRESSURE_CRITICAL);
+    }
+#else
+    UNUSED_PARAM(critical);
+#endif
+
 #if PLATFORM(IOS)
     if (isUnderMemoryPressure()) {
         gcController().garbageCollectSoon();
@@ -68,6 +89,13 @@ void MemoryPressureHandler::platformReleaseMemory(bool)
         // Do a full GC since this is our last chance to run any code.
         ReliefLogger log("Collecting JavaScript garbage");
         gcController().garbageCollectNow();
+    }
+
+    // Do a full sweep of collected objects.
+    {
+        ReliefLogger log("Full JavaScript garbage sweep");
+        JSC::JSLockHolder lock(JSDOMWindow::commonVM());
+        JSDOMWindow::commonVM().heap.sweeper()->fullSweep();
     }
 #endif
 }
@@ -132,9 +160,6 @@ void MemoryPressureHandler::install()
         // We only do a synchronous GC when *simulating* memory pressure.
         // This gives us a more consistent picture of live objects at the end of testing.
         gcController().garbageCollectNow();
-
-        // Release any freed up blocks from the JS heap back to the system.
-        JSDOMWindowBase::commonVM().heap.blockAllocator().releaseFreeRegions();
 
         WTF::releaseFastMallocFreeMemory();
 

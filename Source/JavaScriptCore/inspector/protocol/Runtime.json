@@ -13,11 +13,12 @@
             "description": "Mirror object referencing original JavaScript object.",
             "properties": [
                 { "name": "type", "type": "string", "enum": ["object", "function", "undefined", "string", "number", "boolean", "symbol"], "description": "Object type." },
-                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
+                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap", "iterator"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
                 { "name": "className", "type": "string", "optional": true, "description": "Object class (constructor) name. Specified for <code>object</code> type values only." },
                 { "name": "value", "type": "any", "optional": true, "description": "Remote object value (in case of primitive values or JSON values if it was requested)." },
                 { "name": "description", "type": "string", "optional": true, "description": "String representation of the object." },
                 { "name": "objectId", "$ref": "RemoteObjectId", "optional": true, "description": "Unique object identifier (for non-primitive values)." },
+                { "name": "size", "type": "integer", "optional": true, "description": "Size of the array/collection. Specified for array/map/set/weakmap object type values only." },
                 { "name": "preview", "$ref": "ObjectPreview", "optional": true, "description": "Preview containing abbreviated property values. Specified for <code>object</code> type values only." }
             ]
         },
@@ -27,12 +28,13 @@
             "description": "Object containing abbreviated remote object value.",
             "properties": [
                 { "name": "type", "type": "string", "enum": ["object", "function", "undefined", "string", "number", "boolean", "symbol"], "description": "Object type." },
-                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
+                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap", "iterator"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
                 { "name": "description", "type": "string", "optional": true, "description": "String representation of the object." },
                 { "name": "lossless", "type": "boolean", "description": "Determines whether preview is lossless (contains all information of the original object)." },
                 { "name": "overflow", "type": "boolean", "optional": true, "description": "True iff some of the properties of the original did not fit." },
                 { "name": "properties", "type": "array", "items": { "$ref": "PropertyPreview" }, "optional": true, "description": "List of the properties." },
-                { "name": "entries", "type": "array", "items": { "$ref": "EntryPreview" }, "optional": true, "description": "List of the entries. Specified for <code>map</code> and <code>set</code> subtype values only." }
+                { "name": "entries", "type": "array", "items": { "$ref": "EntryPreview" }, "optional": true, "description": "List of the entries. Specified for <code>map</code> and <code>set</code> subtype values only." },
+                { "name": "size", "type": "integer", "optional": true, "description": "Size of the array/collection. Specified for array/map/set/weakmap object type values only." }
             ]
         },
         {
@@ -41,7 +43,7 @@
             "properties": [
                 { "name": "name", "type": "string", "description": "Property name." },
                 { "name": "type", "type": "string", "enum": ["object", "function", "undefined", "string", "number", "boolean", "symbol", "accessor"], "description": "Object type." },
-                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
+                { "name": "subtype", "type": "string", "optional": true, "enum": ["array", "null", "node", "regexp", "date", "error", "map", "set", "weakmap", "iterator"], "description": "Object subtype hint. Specified for <code>object</code> type values only." },
                 { "name": "value", "type": "string", "optional": true, "description": "User-friendly property value string." },
                 { "name": "valuePreview", "$ref": "ObjectPreview", "optional": true, "description": "Nested value preview." },
                 { "name": "internal", "type": "boolean", "optional": true, "description": "True if this is an internal property." }
@@ -209,11 +211,13 @@
                 { "name": "doNotPauseOnExceptionsAndMuteConsole", "type": "boolean", "optional": true, "description": "Specifies whether evaluation should stop on exceptions and mute console. Overrides setPauseOnException state." },
                 { "name": "contextId", "$ref": "Runtime.ExecutionContextId", "optional": true, "description": "Specifies in which isolated context to perform evaluation. Each content script lives in an isolated context and this parameter may be used to specify one of those contexts. If the parameter is omitted or 0 the evaluation will be performed in the context of the inspected page." },
                 { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object that should be sent by value." },
-                { "name": "generatePreview", "type": "boolean", "optional": true, "description": "Whether preview should be generated for the result." }
+                { "name": "generatePreview", "type": "boolean", "optional": true, "description": "Whether preview should be generated for the result." },
+                { "name": "saveResult", "type": "boolean", "optional": true, "description": "Whether the resulting value should be considered for saving in the $n history." }
             ],
             "returns": [
                 { "name": "result", "$ref": "RemoteObject", "description": "Evaluation result." },
-                { "name": "wasThrown", "type": "boolean", "optional": true, "description": "True if the result was thrown during the evaluation." }
+                { "name": "wasThrown", "type": "boolean", "optional": true, "description": "True if the result was thrown during the evaluation." },
+                { "name": "savedResultIndex", "type": "integer", "optional": true, "description": "If the result was saved, this is the $n index that can be used to access the value." }
             ],
             "description": "Evaluates expression on global object."
         },
@@ -270,6 +274,17 @@
             "returns": [
                 { "name": "entries", "type": "array", "items": { "$ref": "CollectionEntry" }, "description": "Array of collection entries." }
             ]
+        },
+        {
+            "name": "saveResult",
+            "parameters": [
+                { "name": "value", "$ref": "CallArgument", "description": "Id or value of the object to save." },
+                { "name": "contextId", "optional": true, "$ref": "ExecutionContextId", "description": "Unique id of the execution context. To specify in which execution context script evaluation should be performed. If not provided, determine from the CallArgument's objectId." }
+            ],
+            "returns": [
+                { "name": "savedResultIndex", "type": "integer", "optional": true, "description": "If the value was saved, this is the $n index that can be used to access the value." }
+            ],
+            "description": "Assign a saved result index to this value."
         },
         {
             "name": "releaseObject",

@@ -79,6 +79,8 @@
 #include "MediaSessionManager.h"
 #include "MemoryCache.h"
 #include "MemoryInfo.h"
+#include "MicroTask.h"
+#include "MicroTaskTest.h"
 #include "MockPageOverlayClient.h"
 #include "Page.h"
 #include "PageCache.h"
@@ -108,6 +110,7 @@
 #include "WebConsoleAgent.h"
 #include "WorkerThread.h"
 #include "XMLHttpRequest.h"
+#include <JavaScriptCore/Profile.h>
 #include <bytecode/CodeBlock.h>
 #include <inspector/InspectorAgentBase.h>
 #include <inspector/InspectorValues.h>
@@ -170,6 +173,10 @@
 
 #if PLATFORM(MAC)
 #include "DictionaryLookup.h"
+#endif
+
+#if ENABLE(CONTENT_FILTERING)
+#include "MockContentFilter.h"
 #endif
 
 using JSC::CodeBlock;
@@ -301,7 +308,7 @@ void Internals::resetToConsistentState(Page* page)
         page->mainFrame().editor().toggleContinuousSpellChecking();
     if (page->mainFrame().editor().isOverwriteModeEnabled())
         page->mainFrame().editor().toggleOverwriteModeEnabled();
-    cacheStorage().setDefaultOriginQuota(ApplicationCacheStorage::noQuota());
+    ApplicationCacheStorage::singleton().setDefaultOriginQuota(ApplicationCacheStorage::noQuota());
 #if ENABLE(VIDEO)
     MediaSessionManager::sharedManager().resetRestrictions();
 #endif
@@ -311,6 +318,10 @@ void Internals::resetToConsistentState(Page* page)
 #endif
 
     MockPageOverlayClient::singleton().uninstallAllOverlays();
+
+#if ENABLE(CONTENT_FILTERING)
+    MockContentFilterSettings::reset();
+#endif
 }
 
 Internals::Internals(Document* document)
@@ -325,6 +336,10 @@ Internals::Internals(Document* document)
     MockMediaStreamCenter::registerMockMediaStreamCenter();
     enableMockRTCPeerConnectionHandler();
     WebCore::provideUserMediaTo(document->page(), new UserMediaClientMock());
+#endif
+
+#if ENABLE(CONTENT_FILTERING)
+    MockContentFilter::ensureInstalled();
 #endif
 }
 
@@ -1927,7 +1942,7 @@ void Internals::setApplicationCacheOriginQuota(unsigned long long quota)
     Document* document = contextDocument();
     if (!document)
         return;
-    cacheStorage().storeUpdatedQuotaForOrigin(document->securityOrigin(), quota);
+    ApplicationCacheStorage::singleton().storeUpdatedQuotaForOrigin(document->securityOrigin(), quota);
 }
 
 void Internals::registerURLSchemeAsBypassingContentSecurityPolicy(const String& scheme)
@@ -2126,7 +2141,8 @@ void Internals::forceReload(bool endToEnd)
 #if ENABLE(ENCRYPTED_MEDIA_V2)
 void Internals::initializeMockCDM()
 {
-    CDM::registerCDMFactory(MockCDM::create, MockCDM::supportsKeySystem, MockCDM::supportsKeySystemAndMimeType);
+    CDM::registerCDMFactory([](CDM* cdm) { return std::make_unique<MockCDM>(cdm); },
+        MockCDM::supportsKeySystem, MockCDM::supportsKeySystemAndMimeType);
 }
 #endif
 
@@ -2529,5 +2545,18 @@ RefPtr<File> Internals::createFile(const String& path)
 
     return File::create(url.fileSystemPath());
 }
+
+void Internals::queueMicroTask(int testNumber)
+{
+    if (contextDocument())
+        MicroTaskQueue::singleton().queueMicroTask(MicroTaskTest::create(contextDocument()->createWeakPtr(), testNumber));
+}
+
+#if ENABLE(CONTENT_FILTERING)
+MockContentFilterSettings& Internals::mockContentFilterSettings()
+{
+    return MockContentFilterSettings::singleton();
+}
+#endif
 
 }

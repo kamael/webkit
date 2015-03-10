@@ -35,6 +35,9 @@ WebInspector.ConsoleObserver.prototype = {
 
     messageAdded: function(message)
     {
+        if (message.type === "assert" && !message.text)
+            message.text = WebInspector.UIString("Assertion");
+
         if (message.level === "warning" || message.level === "error")
             WebInspector.issueManager.issueWasAdded(message.source, message.level, message.text, message.url, message.line, message.column || 0, message.parameters);
 

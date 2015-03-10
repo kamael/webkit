@@ -239,7 +239,7 @@ bool Element::isMouseFocusable() const
 
 bool Element::shouldUseInputMethod()
 {
-    return isContentEditable(UserSelectAllIsAlwaysNonEditable);
+    return computeEditability(UserSelectAllIsAlwaysNonEditable, ShouldUpdateStyle::Update) != Editability::ReadOnly;
 }
 
 bool Element::dispatchMouseEvent(const PlatformMouseEvent& platformEvent, const AtomicString& eventType, int detail, Element* relatedTarget)
@@ -280,7 +280,7 @@ bool Element::dispatchMouseEvent(const PlatformMouseEvent& platformEvent, const 
 bool Element::dispatchWheelEvent(const PlatformWheelEvent& event)
 {
     if (!event.deltaX() && !event.deltaY())
-        return false;
+        return true;
 
     RefPtr<WheelEvent> wheelEvent = WheelEvent::create(event, document().defaultView());
     return EventDispatcher::dispatchEvent(this, wheelEvent) && !wheelEvent->defaultHandled();
@@ -296,11 +296,6 @@ void Element::dispatchSimulatedClick(Event* underlyingEvent, SimulatedClickMouse
 {
     EventDispatcher::dispatchSimulatedClick(this, underlyingEvent, eventOptions, visualOptions);
 }
-
-DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, blur);
-DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, error);
-DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, focus);
-DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, load);
 
 RefPtr<Node> Element::cloneNodeInternal(Document& targetDocument, CloningOperation type)
 {
@@ -381,7 +376,7 @@ NamedNodeMap& Element::attributes() const
     if (NamedNodeMap* attributeMap = rareData.attributeMap())
         return *attributeMap;
 
-    rareData.setAttributeMap(NamedNodeMap::create(const_cast<Element&>(*this)));
+    rareData.setAttributeMap(std::make_unique<NamedNodeMap>(const_cast<Element&>(*this)));
     return *rareData.attributeMap();
 }
 
@@ -616,6 +611,20 @@ void Element::scrollIntoViewIfNeeded(bool centerIfNeeded)
         renderer()->scrollRectToVisible(bounds, ScrollAlignment::alignToEdgeIfNeeded, ScrollAlignment::alignToEdgeIfNeeded);
 }
 
+void Element::scrollIntoViewIfNotVisible(bool centerIfNotVisible)
+{
+    document().updateLayoutIgnorePendingStylesheets();
+    
+    if (!renderer())
+        return;
+    
+    LayoutRect bounds = renderer()->anchorRect();
+    if (centerIfNotVisible)
+        renderer()->scrollRectToVisible(bounds, ScrollAlignment::alignCenterIfNotVisible, ScrollAlignment::alignCenterIfNotVisible);
+    else
+        renderer()->scrollRectToVisible(bounds, ScrollAlignment::alignToEdgeIfNotVisible, ScrollAlignment::alignToEdgeIfNotVisible);
+}
+    
 void Element::scrollByUnits(int units, ScrollGranularity granularity)
 {
     document().updateLayoutIgnorePendingStylesheets();
@@ -1685,7 +1694,7 @@ void Element::finishParsingChildren()
         styleResolver->popParentElement(this);
 }
 
-#ifndef NDEBUG
+#if ENABLE(TREE_DEBUGGING)
 void Element::formatForDebugger(char* buffer, unsigned length) const
 {
     StringBuilder result;

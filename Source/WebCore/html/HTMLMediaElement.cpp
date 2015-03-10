@@ -328,7 +328,7 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document& docum
 #if ENABLE(WEB_AUDIO)
     , m_audioSourceNode(0)
 #endif
-    , m_mediaSession(HTMLMediaSession::create(*this))
+    , m_mediaSession(std::make_unique<HTMLMediaSession>(*this))
     , m_reportedExtraMemoryCost(0)
 #if ENABLE(MEDIA_STREAM)
     , m_mediaStreamSrcObject(nullptr)
@@ -1220,6 +1220,11 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
             mediaLoadingFailed(MediaPlayer::FormatError);
         }
     } else
+#endif
+#if ENABLE(MEDIA_STREAM)
+        if (m_mediaStreamSrcObject)
+            m_player->load(m_mediaStreamSrcObject->privateStream());
+        else
 #endif
     if (!m_player->load(url, contentType, keySystem))
         mediaLoadingFailed(MediaPlayer::FormatError);
@@ -4372,6 +4377,16 @@ PassRefPtr<TimeRanges> HTMLMediaElement::buffered() const
     return TimeRanges::create(*m_player->buffered());
 }
 
+double HTMLMediaElement::maxBufferedTime() const
+{
+    RefPtr<TimeRanges> bufferedRanges = buffered();
+    unsigned numRanges = bufferedRanges->length();
+    if (!numRanges)
+        return 0;
+
+    return bufferedRanges->end(numRanges - 1, ASSERT_NO_EXCEPTION);
+}
+
 PassRefPtr<TimeRanges> HTMLMediaElement::played()
 {
     if (m_playing) {
@@ -4711,6 +4726,11 @@ void HTMLMediaElement::clearMediaPlayer(int flags)
 bool HTMLMediaElement::canSuspend() const
 {
     return true; 
+}
+
+const char* HTMLMediaElement::activeDOMObjectName() const
+{
+    return "HTMLMediaElement";
 }
 
 void HTMLMediaElement::stop()
